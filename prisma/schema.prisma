@@ -1,0 +1,184 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Roles de usuario
+enum Role {
+  ADMINISTRADOR
+  BIBLIOTECARIO
+  ALUMNO
+}
+
+// Tabla de usuario
+model User {
+  id          String     @id @default(uuid())
+  email       String     @unique @db.VarChar(100)
+  first_name  String     @db.VarChar(100)
+  last_name   String?    @db.VarChar(100)
+  password    String     @db.VarChar(200)
+  IsActive    Boolean    @default(true)
+  roles       Role[]     @default([BIBLIOTECARIO])
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Relaciones
+  Loans       Loan[]
+}
+
+// Estudiante
+model Student {
+  id          String     @id @default(uuid())
+  email       String     @unique @db.VarChar(100)
+  first_name  String     @db.VarChar(100)
+  last_name   String     @db.VarChar(100)
+  address     String     @db.VarChar(100)
+  phone       String     @db.VarChar(20)
+  degreeId    String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Relaciones
+  Degree      Degree     @relation(fields: [degreeId], references: [id])
+  Loans       Loan[]
+}
+
+// Prestamos
+model Loan {
+  id          String     @id @default(uuid())
+  userId      String
+  studentId   String
+  bookId      String
+  loan_start  DateTime   @default(now())
+  loan_end    DateTime?
+  statusId    String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Relaciones
+  User        User       @relation(fields: [userId], references: [id])
+  Student     Student    @relation(fields: [studentId], references: [id])
+  Book        Book       @relation(fields: [bookId], references: [id])
+  Status      Status     @relation(fields: [statusId], references: [id])
+  History     Loan_Student_History[]
+}
+
+// Historial de préstamos
+model Loan_Student_History {
+  id          String     @id @default(uuid())
+  loanId      String
+  start_date  DateTime   @default(now())
+  end_date    DateTime?
+  action      String     @db.VarChar(100)
+  details     String     @db.VarChar(255)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Relaciones
+  Loan        Loan       @relation(fields: [loanId], references: [id])
+}
+
+// Libros
+model Book {
+  id             String     @id @default(uuid())
+  title          String     @db.VarChar(255)
+  author         String     @db.VarChar(255)
+  classification String     @db.VarChar(100)
+  statusId       String
+  stock          Int        @default(0)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  // Relaciones
+  Status         Status     @relation(fields: [statusId], references: [id])
+  Loans          Loan[]
+}
+
+// Estados
+model Status {
+  id          String     @id @default(uuid())
+  name        String     @unique @db.VarChar(100)
+  description String     @db.VarChar(255)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Relaciones
+  Loans       Loan[]
+  Books       Book[]
+}
+
+// Universidad
+model University {
+  id          String     @id @default(uuid())
+  name        String     @unique @db.VarChar(100)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Relaciones
+  Degrees     Degree[]
+}
+
+// Carrera
+model Degree {
+  id             String     @id @default(uuid())
+  name           String     @unique @db.VarChar(100)
+  universityId   String
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  // Relaciones
+  University     University @relation(fields: [universityId], references: [id])
+  Students       Student[]
+}
+
+// Menú
+model Menu {
+  id          String     @id @default(uuid())
+  label       String     @unique @db.VarChar(100)
+  icon        String     @db.VarChar(100)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Relaciones
+  Submenus    Submenu[]
+}
+
+// Submenú
+model Submenu {
+  id          String     @id @default(uuid())
+  label       String     @unique @db.VarChar(100)
+  icon        String     @db.VarChar(100)
+  url         String     @db.Text
+  menuId      String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Relaciones
+  Menu        Menu       @relation(fields: [menuId], references: [id])
+  Permissions Permission[]
+}
+
+// Permiso
+model Permission {
+  id          String     @id @default(uuid())
+  submenuId   String
+  role        Role
+  is_active   Boolean    @default(true)
+  name        String     @unique @db.VarChar(100)
+  description String     @db.VarChar(255)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Relaciones
+  Submenu     Submenu    @relation(fields: [submenuId], references: [id])
+}
