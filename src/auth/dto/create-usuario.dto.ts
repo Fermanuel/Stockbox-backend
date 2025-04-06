@@ -29,7 +29,7 @@ export class CreateUserDto {
     @IsOptional()
     @IsArray()
     @ApiProperty({ enum: Role})
-    roles?: Role[] = [Role.USUARIO];
+    roles?: Role[] = [Role.ADMINISTRADOR];
 
     @IsBoolean()
     @IsOptional()
