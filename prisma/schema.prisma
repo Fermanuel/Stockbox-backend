@@ -13,30 +13,33 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Roles de usuario
-enum Role {
-  ADMINISTRADOR
-  BIBLIOTECARIO
-  ALUMNO
+model Role {
+  id          String       @id @default(uuid())
+  name        String       @unique @db.VarChar(100)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  // Relaciones
+  users       User[]
+  permissions Permission[]
 }
 
-// Tabla de usuario
 model User {
   id          String     @id @default(uuid())
   email       String     @unique @db.VarChar(100)
   first_name  String     @db.VarChar(100)
   last_name   String?    @db.VarChar(100)
   password    String     @db.VarChar(200)
-  IsActive    Boolean    @default(true)
-  roles       Role[]     @default([BIBLIOTECARIO])
+  isActive    Boolean    @default(true)
+  roleId      String
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
   // Relaciones
+  Role        Role       @relation(fields: [roleId], references: [id])
   Loans       Loan[]
 }
 
-// Estudiante
 model Student {
   id          String     @id @default(uuid())
   email       String     @unique @db.VarChar(100)
@@ -53,7 +56,6 @@ model Student {
   Loans       Loan[]
 }
 
-// Prestamos
 model Loan {
   id          String     @id @default(uuid())
   userId      String
@@ -73,7 +75,6 @@ model Loan {
   History     Loan_Student_History[]
 }
 
-// Historial de préstamos
 model Loan_Student_History {
   id          String     @id @default(uuid())
   loanId      String
@@ -88,7 +89,6 @@ model Loan_Student_History {
   Loan        Loan       @relation(fields: [loanId], references: [id])
 }
 
-// Libros
 model Book {
   id             String     @id @default(uuid())
   title          String     @db.VarChar(255)
@@ -104,7 +104,6 @@ model Book {
   Loans          Loan[]
 }
 
-// Estados
 model Status {
   id          String     @id @default(uuid())
   name        String     @unique @db.VarChar(100)
@@ -117,7 +116,6 @@ model Status {
   Books       Book[]
 }
 
-// Universidad
 model University {
   id          String     @id @default(uuid())
   name        String     @unique @db.VarChar(100)
@@ -128,7 +126,6 @@ model University {
   Degrees     Degree[]
 }
 
-// Carrera
 model Degree {
   id             String     @id @default(uuid())
   name           String     @unique @db.VarChar(100)
@@ -141,11 +138,10 @@ model Degree {
   Students       Student[]
 }
 
-// Menú
 model Menu {
   id          String     @id @default(uuid())
-  label       String     @unique @db.VarChar(100)
-  icon        String     @db.VarChar(100)
+  label       String     @unique @db.VarChar(100) // corresponde a "Nombre"
+  icon        String     @db.VarChar(100)         // corresponde a "Icono"
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
@@ -153,12 +149,11 @@ model Menu {
   Submenus    Submenu[]
 }
 
-// Submenú
 model Submenu {
   id          String     @id @default(uuid())
-  label       String     @unique @db.VarChar(100)
+  label       String     @unique @db.VarChar(100) // corresponde a "Nombre"
   icon        String     @db.VarChar(100)
-  url         String     @db.Text
+  url         String     @db.Text                // se utiliza en lugar de "NombreFormulario"
   menuId      String
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
@@ -168,11 +163,10 @@ model Submenu {
   Permissions Permission[]
 }
 
-// Permiso
 model Permission {
   id          String     @id @default(uuid())
   submenuId   String
-  role        Role
+  roleId      String
   is_active   Boolean    @default(true)
   name        String     @unique @db.VarChar(100)
   description String     @db.VarChar(255)
@@ -181,4 +175,5 @@ model Permission {
 
   // Relaciones
   Submenu     Submenu    @relation(fields: [submenuId], references: [id])
+  Role        Role       @relation(fields: [roleId], references: [id])
 }

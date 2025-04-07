@@ -27,10 +27,10 @@ export class AuthService {
 
       const { email, password } = loginUserDto;
 
-      // Buscar usuario en la base de datos
+      // Buscar usuario en la base de datos e incluir el nombre del rol
       const user = await this.dbService.user.findUnique({
         where: {
-          email
+          email,
         },
         select: {
           id: true,
@@ -38,17 +38,22 @@ export class AuthService {
           password: true,
           first_name: true,
           last_name: true,
-          roles: true,
-          IsActive: true
-        }
+          isActive: true,
+          Role: {
+            select: {
+              name: true,
+            },
+          },
+        },
       });
+
 
       if (!user) {
         throw new UnauthorizedException('Usuario no encontrado');
       }
 
       // Verificar si el usuario esta activo
-      if (!user.IsActive) {
+      if (!user.isActive) {
         throw new UnauthorizedException('Usuario suspendido, contacte al administrador');
       }
 

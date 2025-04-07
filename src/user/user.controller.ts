@@ -15,7 +15,7 @@ export class UserController {
 
   // ENDPOINT PARA ACTUALIZAR EL ROL
   @ApiBearerAuth()
-  @Auth(Role.ADMINISTRADOR)
+  @Auth('ADMINISTRADOR')
   @Patch('role/:id')
   UpdateUser(@Param('id', ParseUUIDPipe) id: string, @Body() updateUserDto: UpdateUserDto) {
 
@@ -23,8 +23,8 @@ export class UserController {
   }
 
   // solo el administrador puede registrar usuarios
-  @ApiBearerAuth()
-  @Auth(Role.ADMINISTRADOR)
+  // @ApiBearerAuth()
+  // @Auth('ADMINISTRADOR')
   @Post('register')
   createUser(@Body() createUsuarioDto: CreateUserDto) {
     return this.userService.create(createUsuarioDto);
@@ -32,7 +32,7 @@ export class UserController {
 
   // ENDPOINT PARA DESACTIVAR USUARIOS O ACTIVARLOS
   @ApiBearerAuth()
-  @Auth(Role.ADMINISTRADOR)
+  @Auth('ADMINISTRADOR')
   @Patch('status/:id')
   DesactivUser(@Param('id', ParseUUIDPipe) id: string) {
     return this.userService.toggleUserStatus(id);

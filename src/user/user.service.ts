@@ -21,13 +21,23 @@ export class UserService {
 
       // Verificar si el usuario ya existe en la base de datos
       const existingUser = await this.dbService.user.findUnique({
-        where: {
-          email
-        }
+        where: { email },
       });
 
       if (existingUser) {
         throw new BadRequestException('Este Usuario ya existe, intente de nuevo');
+      }
+
+      // Obtener roleId del DTO, o asignar por defecto "BIBLIOTECARIO" si no se proporcionó
+      let { roleId } = rest;
+      if (!roleId) {
+        const defaultRole = await this.dbService.role.findUnique({
+          where: { name: 'BIBLIOTECARIO' },
+        });
+        if (!defaultRole) {
+          throw new InternalServerErrorException('Default role not found');
+        }
+        roleId = defaultRole.id;
       }
 
       // Crear nuevo usuario
@@ -35,22 +45,18 @@ export class UserService {
         data: {
           email,
           password: bcrypt.hashSync(password, 10),
-          ...rest
-        }
+          ...rest,
+          roleId,
+        },
       });
 
       // Excluir el campo password del resultado
-      const { password: _, ...user } = newUser;
-
-      return {
-        data: user
-      };
+      const { password: _password, ...userData } = newUser;
+      return { data: userData };
 
     } catch (error) {
-
       this.logger.error(error);
 
-      // Verificar si el error es de tipo BadRequestException
       if (error instanceof BadRequestException) {
         throw error;
       }
@@ -59,11 +65,12 @@ export class UserService {
     }
   }
 
+
   // Desactivar o activar un usuario
   async toggleUserStatus(id: string) {
 
     try {
-      
+
       // Buscar usuario en la base de datos
       const user = await this.dbService.user.findUnique({
         where: {
@@ -71,7 +78,7 @@ export class UserService {
         },
         select: {
           id: true,
-          IsActive: true
+          isActive: true
         }
       });
 
@@ -85,7 +92,7 @@ export class UserService {
           id
         },
         data: {
-          IsActive: !user.IsActive
+          isActive: !user.isActive
         }
       });
 
@@ -107,21 +114,16 @@ export class UserService {
     }
   }
 
-    // Actualizar el rol del usuario
+  // Actualizar el rol del usuario
   async updateUser(id: string, updateUserDto: UpdateUserDto) {
-    
     try {
-      const { roles } = updateUserDto;
+      // Se extrae roleId del DTO, en lugar de roles
+      const { roleId } = updateUserDto;
 
       // Buscar usuario en la base de datos
       const user = await this.dbService.user.findUnique({
-        where: {
-          id
-        },
-        select: {
-          id: true,
-          roles: true
-        }
+        where: { id },
+        select: { id: true, roleId: true }
       });
 
       if (!user) {
@@ -130,33 +132,22 @@ export class UserService {
 
       // Actualizar el rol del usuario
       const updatedUser = await this.dbService.user.update({
-        where: {
-          id
-        },
-        data: {
-          roles
-        }
+        where: { id },
+        data: { roleId }
       });
 
       // Excluir el campo password del resultado
-      const { password: _, ...userData } = updatedUser;
+      const { password, ...userData } = updatedUser;
 
-      return {
-        data: userData
-      };
+      return { data: userData };
 
     } catch (error) {
-
       this.logger.error(error);
-
-      // Verificar si el error es de tipo BadRequestException
-      if (error instanceof BadRequestException) {
-        throw error;
-      }
-
+      if (error instanceof BadRequestException) throw error;
       this.handleDBError(error);
     }
   }
+
 
   // metodo para manejar los errores
   private handleDBError(error: any): never {
@@ -166,21 +157,5 @@ export class UserService {
     }
 
     throw new InternalServerErrorException('Error en la base de datos');
-  }
-
-  findAll() {
-    return `This action returns all user`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
-  }
-
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} user`;
   }
 }

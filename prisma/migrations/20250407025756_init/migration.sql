@@ -1,5 +1,12 @@
--- CreateEnum
-CREATE TYPE "Role" AS ENUM ('ADMINISTRADOR', 'BIBLIOTECARIO', 'ALUMNO');
+-- CreateTable
+CREATE TABLE "Role" (
+    "id" TEXT NOT NULL,
+    "name" VARCHAR(100) NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Role_pkey" PRIMARY KEY ("id")
+);
 
 -- CreateTable
 CREATE TABLE "User" (
@@ -8,8 +15,8 @@ CREATE TABLE "User" (
     "first_name" VARCHAR(100) NOT NULL,
     "last_name" VARCHAR(100),
     "password" VARCHAR(200) NOT NULL,
-    "IsActive" BOOLEAN NOT NULL DEFAULT true,
-    "roles" "Role"[] DEFAULT ARRAY['BIBLIOTECARIO']::"Role"[],
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "roleId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -134,7 +141,7 @@ CREATE TABLE "Submenu" (
 CREATE TABLE "Permission" (
     "id" TEXT NOT NULL,
     "submenuId" TEXT NOT NULL,
-    "role" "Role" NOT NULL,
+    "roleId" TEXT NOT NULL,
     "is_active" BOOLEAN NOT NULL DEFAULT true,
     "name" VARCHAR(100) NOT NULL,
     "description" VARCHAR(255) NOT NULL,
@@ -143,6 +150,9 @@ CREATE TABLE "Permission" (
 
     CONSTRAINT "Permission_pkey" PRIMARY KEY ("id")
 );
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Role_name_key" ON "Role"("name");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
@@ -167,6 +177,9 @@ CREATE UNIQUE INDEX "Submenu_label_key" ON "Submenu"("label");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Permission_name_key" ON "Permission"("name");
+
+-- AddForeignKey
+ALTER TABLE "User" ADD CONSTRAINT "User_roleId_fkey" FOREIGN KEY ("roleId") REFERENCES "Role"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Student" ADD CONSTRAINT "Student_degreeId_fkey" FOREIGN KEY ("degreeId") REFERENCES "Degree"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -197,3 +210,6 @@ ALTER TABLE "Submenu" ADD CONSTRAINT "Submenu_menuId_fkey" FOREIGN KEY ("menuId"
 
 -- AddForeignKey
 ALTER TABLE "Permission" ADD CONSTRAINT "Permission_submenuId_fkey" FOREIGN KEY ("submenuId") REFERENCES "Submenu"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Permission" ADD CONSTRAINT "Permission_roleId_fkey" FOREIGN KEY ("roleId") REFERENCES "Role"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
