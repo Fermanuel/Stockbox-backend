@@ -8,6 +8,7 @@ import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { JwtPayload } from './interface/jwt-paylot.interface';
 import { User } from '@prisma/client';
+import { UserService } from 'src/user/user.service';
 
 @Injectable()
 export class AuthService {
@@ -16,7 +17,8 @@ export class AuthService {
 
   constructor(
     private readonly dbService: DbService,
-    private readonly jwtService: JwtService
+    private readonly jwtService: JwtService,
+    private readonly userService: UserService,
   ) {
   }
 
@@ -64,11 +66,15 @@ export class AuthService {
         throw new UnauthorizedException('Contraseña incorrecta');
       }
 
+      // Verificar de menus de acceso
+      const menus = await this.userService.getUserMenus(user.id);
+
       // Excluir el campo password del resultado
       const { password: _, ...userData } = user;
 
       return {
         data: userData,
+        menus,
         token: this.getJwtToken({ id: user.id }),
       };
 

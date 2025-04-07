@@ -18,16 +18,16 @@ export class UserService {
   async create(createUsuarioDto: CreateUserDto) {
     try {
       const { email, password, ...rest } = createUsuarioDto;
-  
+
       // Verificar si el usuario ya existe en la base de datos
       const existingUser = await this.dbService.user.findUnique({
         where: { email },
       });
-  
+
       if (existingUser) {
         throw new BadRequestException('Este Usuario ya existe, intente de nuevo');
       }
-  
+
       // Obtener roleId del DTO, o asignar por defecto "BIBLIOTECARIO" si no se proporcionó
       let { roleId } = rest;
       if (!roleId) {
@@ -39,7 +39,7 @@ export class UserService {
         }
         roleId = defaultRole.id;
       }
-  
+
       const newUser = await this.dbService.user.create({
         data: {
           email,
@@ -55,10 +55,10 @@ export class UserService {
           }, // Incluye la relación con la tabla Role
         },
       });
-  
+
       // Excluir campos sensibles
       const { password: _password, roleId: _roleId, Role, ...userData } = newUser;
-  
+
       // Aplanar la respuesta para que 'role' sea solo el nombre
       return {
         data: {
@@ -66,18 +66,17 @@ export class UserService {
           role: Role.name, // Aplanamos el objeto 'Role' a solo su nombre
         },
       };
-  
+
     } catch (error) {
       this.logger.error(error);
-  
+
       if (error instanceof BadRequestException) {
         throw error;
       }
-  
+
       this.handleDBError(error);
     }
   }
-
 
   // Desactivar o activar un usuario
   async toggleUserStatus(id: string) {
@@ -126,6 +125,60 @@ export class UserService {
       this.handleDBError(error);
     }
   }
+
+  async getUserMenus(userId: string) {
+    // Obtener el usuario junto con su rol y permisos asociados
+    const userWithRole = await this.dbService.user.findUnique({
+      where: { id: userId },
+      select: {
+        Role: {
+          select: {
+            permissions: {
+              select: {
+                Submenu: {
+                  select: {
+                    Menu: {
+                      select: {
+                        id: true,
+                        label: true,
+                        icon: true,
+                      },
+                    },
+                    label: true,
+                    url: true,
+                    icon: true,
+                  },
+                },
+                is_active: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  
+    if (!userWithRole) {
+      throw new Error('Usuario no encontrado');
+    }
+  
+    // Filtrar los menús y submenús activos
+    const menus = userWithRole.Role.permissions
+      .filter(permission => permission.is_active)
+      .map(permission => ({
+        menu: {
+          id: permission.Submenu.Menu.id,
+          label: permission.Submenu.Menu.label,
+          icon: permission.Submenu.Menu.icon,
+        },
+        submenu: {
+          name: permission.Submenu.label,
+          url: permission.Submenu.url,
+          icon: permission.Submenu.icon,
+        },
+      }));
+  
+    return menus;
+  }  
 
   // Actualizar el rol del usuario
   async updateUser(id: string, updateUserDto: UpdateUserDto) {
