@@ -18,16 +18,16 @@ export class UserService {
   async create(createUsuarioDto: CreateUserDto) {
     try {
       const { email, password, ...rest } = createUsuarioDto;
-
+  
       // Verificar si el usuario ya existe en la base de datos
       const existingUser = await this.dbService.user.findUnique({
         where: { email },
       });
-
+  
       if (existingUser) {
         throw new BadRequestException('Este Usuario ya existe, intente de nuevo');
       }
-
+  
       // Obtener roleId del DTO, o asignar por defecto "BIBLIOTECARIO" si no se proporcionó
       let { roleId } = rest;
       if (!roleId) {
@@ -39,7 +39,7 @@ export class UserService {
         }
         roleId = defaultRole.id;
       }
-
+  
       const newUser = await this.dbService.user.create({
         data: {
           email,
@@ -48,29 +48,32 @@ export class UserService {
           roleId,
         },
         include: {
-          Role: true, // Incluye la relación con la tabla Role
+          Role: {
+            select: {
+              name: true, // Solo el nombre del rol
+            },
+          }, // Incluye la relación con la tabla Role
         },
       });
-      
+  
       // Excluir campos sensibles
-      const { password: _password, roleId: _roleId, ...userData } = newUser;
-      
-      // Retornar el usuario con el nombre del rol
+      const { password: _password, roleId: _roleId, Role, ...userData } = newUser;
+  
+      // Aplanar la respuesta para que 'role' sea solo el nombre
       return {
         data: {
           ...userData,
-          role: userData.Role.name, // Solo el nombre del rol
+          role: Role.name, // Aplanamos el objeto 'Role' a solo su nombre
         },
       };
-      
-
+  
     } catch (error) {
       this.logger.error(error);
-
+  
       if (error instanceof BadRequestException) {
         throw error;
       }
-
+  
       this.handleDBError(error);
     }
   }
