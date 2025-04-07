@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable, InternalServerErrorException, Logger, UnauthorizedException } from '@nestjs/common';
 
-import { CreateUserDto } from './dto/create-usuario.dto';
 import { LoginUserDto } from './dto/login-usuario.dto';
 import { DbService } from 'src/db/db.service';
 
@@ -8,7 +7,6 @@ import * as bcrypt from 'bcrypt';
 
 import { JwtService } from '@nestjs/jwt';
 import { JwtPayload } from './interface/jwt-paylot.interface';
-import { UpdateUserDto } from './dto/update-usuario.dto';
 import { User } from '@prisma/client';
 
 @Injectable()
@@ -16,58 +14,14 @@ export class AuthService {
 
   private readonly logger = new Logger(AuthService.name);
 
-  constructor (
+  constructor(
     private readonly dbService: DbService,
     private readonly jwtService: JwtService
   ) {
   }
 
-  async create(createUsuarioDto: CreateUserDto) {
-    try {
-      const { email, password, ...rest } = createUsuarioDto;
-  
-      // Verificar si el usuario ya existe en la base de datos
-      const existingUser = await this.dbService.user.findUnique({
-        where: {
-          email
-        }
-      });
-  
-      if (existingUser) {
-        throw new BadRequestException('Este Usuario ya existe, intente de nuevo');
-      }
-  
-      // Crear nuevo usuario
-      const newUser = await this.dbService.user.create({
-        data: {
-          email,
-          password: bcrypt.hashSync(password, 10),
-          ...rest
-        }
-      });
-  
-      // Excluir el campo password del resultado
-      const { password: _, ...user } = newUser;
-  
-      return {
-        data: user,
-        token: this.getJwtToken({ id: newUser.id }),
-      };
-  
-    } catch (error) {
 
-      this.logger.error(error);
-
-      // Verificar si el error es de tipo BadRequestException
-      if (error instanceof BadRequestException) {
-        throw error;
-      }
-
-      this.handleDBError(error);
-    }
-  }
-
-  async login(loginUserDto: LoginUserDto) {
+  async singIn(loginUserDto: LoginUserDto) {
 
     try {
 
@@ -117,7 +71,7 @@ export class AuthService {
     } catch (error) {
 
       this.logger.error(error);
-      
+
       // Verificar si el error es de tipo UnauthorizedException
       if (error instanceof UnauthorizedException) {
         throw error;
@@ -128,125 +82,24 @@ export class AuthService {
     }
   }
 
-  // Desactivar o activar un usuario
-  async toggleUserStatus(id: string) {
-
-    try {
-      
-      // Buscar usuario en la base de datos
-      const user = await this.dbService.user.findUnique({
-        where: {
-          id
-        },
-        select: {
-          id: true,
-          IsActive: true
-        }
-      });
-
-      if (!user) {
-        throw new BadRequestException('Usuario no encontrado');
-      }
-
-      // Actualizar el estado del usuario
-      const updatedUser = await this.dbService.user.update({
-        where: {
-          id
-        },
-        data: {
-          IsActive: !user.IsActive
-        }
-      });
-
-      // Excluir el campo password del resultado
-      const { password: _, ...userData } = updatedUser;
-
-      return userData;
-
-    } catch (error) {
-
-      this.logger.error(error);
-
-      // Verificar si el error es de tipo BadRequestException
-      if (error instanceof BadRequestException) {
-        throw error;
-      }
-
-      this.handleDBError(error);
-    }
-  }
-
-  // Actualizar el rol del usuario
-  async updateUser(id: string, updateUserDto: UpdateUserDto) {
-    
-    try {
-      const { roles } = updateUserDto;
-
-      // Buscar usuario en la base de datos
-      const user = await this.dbService.user.findUnique({
-        where: {
-          id
-        },
-        select: {
-          id: true,
-          roles: true
-        }
-      });
-
-      if (!user) {
-        throw new BadRequestException('Usuario no encontrado');
-      }
-
-      // Actualizar el rol del usuario
-      const updatedUser = await this.dbService.user.update({
-        where: {
-          id
-        },
-        data: {
-          roles
-        }
-      });
-
-      // Excluir el campo password del resultado
-      const { password: _, ...userData } = updatedUser;
-
-      return {
-        data: userData,
-        token: this.getJwtToken({ id: updatedUser.id }),
-      };
-
-    } catch (error) {
-
-      this.logger.error(error);
-
-      // Verificar si el error es de tipo BadRequestException
-      if (error instanceof BadRequestException) {
-        throw error;
-      }
-
-      this.handleDBError(error);
-    }
+  //* GENERACION DE TOKEN
+  private getJwtToken(payload: JwtPayload) {
+    const token = this.jwtService.sign(payload);
+    return token;
   }
 
 
-
-  // Verificar si el usuario esta autenticado
   async checkAuthStatus(user: User) {
     return {
       ...user,
       token: this.getJwtToken({ id: user.id })
     }
   }
-  
-  //* GENERACION DE TOKEN
-  private getJwtToken( payload: JwtPayload) {
-    const token = this.jwtService.sign(payload);
-    return token;
-  }
+
 
   // metodo para manejar los errores
   private handleDBError(error: any): never {
-    
+
     if (error.code === '23505') {
       throw new BadRequestException(error.detail);
     }
