@@ -40,7 +40,6 @@ export class UserService {
         roleId = defaultRole.id;
       }
 
-      // Crear nuevo usuario
       const newUser = await this.dbService.user.create({
         data: {
           email,
@@ -48,11 +47,22 @@ export class UserService {
           ...rest,
           roleId,
         },
+        include: {
+          Role: true, // Incluye la relación con la tabla Role
+        },
       });
-
-      // Excluir el campo password del resultado
-      const { password: _password, ...userData } = newUser;
-      return { data: userData };
+      
+      // Excluir campos sensibles
+      const { password: _password, roleId: _roleId, ...userData } = newUser;
+      
+      // Retornar el usuario con el nombre del rol
+      return {
+        data: {
+          ...userData,
+          role: userData.Role.name, // Solo el nombre del rol
+        },
+      };
+      
 
     } catch (error) {
       this.logger.error(error);
