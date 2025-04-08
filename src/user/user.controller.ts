@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, ParseIntPipe } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -17,7 +17,7 @@ export class UserController {
   @ApiBearerAuth()
   @Auth('ADMINISTRADOR')
   @Patch('role/:id')
-  UpdateUser(@Param('id', ParseUUIDPipe) id: string, @Body() updateUserDto: UpdateUserDto) {
+  UpdateUser(@Param('id', ParseIntPipe) id: number, @Body() updateUserDto: UpdateUserDto) {
 
     return this.userService.updateUser(id, updateUserDto);
   }
@@ -34,7 +34,7 @@ export class UserController {
   @ApiBearerAuth()
   @Auth('ADMINISTRADOR')
   @Patch('status/:id')
-  DesactivUser(@Param('id', ParseUUIDPipe) id: string) {
+  DesactivUser(@Param('id', ParseIntPipe) id: number) {
     return this.userService.toggleUserStatus(id);
   }
 }
