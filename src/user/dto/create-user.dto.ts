@@ -29,7 +29,7 @@ export class CreateUserDto {
     description: "Role id assigned to the user",
     example: "d92b4f8c-1234-5678-90ab-1c2d3e4f5a6b",
   })
-  roleId?: string;
+  roleId?: number;
 
   @IsBoolean()
   @IsOptional()

@@ -79,7 +79,7 @@ export class UserService {
   }
 
   // Desactivar o activar un usuario
-  async toggleUserStatus(id: string) {
+  async toggleUserStatus(id: number) {
 
     try {
 
@@ -126,7 +126,7 @@ export class UserService {
     }
   }
 
-  async getUserMenus(userId: string) {
+  async getUserMenus(userId: number) {
     // Obtener el usuario junto con su rol y permisos asociados
     const userWithRole = await this.dbService.user.findUnique({
       where: { id: userId },
@@ -181,7 +181,7 @@ export class UserService {
   }  
 
   // Actualizar el rol del usuario
-  async updateUser(id: string, updateUserDto: UpdateUserDto) {
+  async updateUser(id: number, updateUserDto: UpdateUserDto) {
     try {
       // Se extrae roleId del DTO, en lugar de roles
       const { roleId } = updateUserDto;

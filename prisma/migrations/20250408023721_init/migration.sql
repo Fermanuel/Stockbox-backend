@@ -1,6 +1,6 @@
 -- CreateTable
 CREATE TABLE "Role" (
-    "id" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
     "name" VARCHAR(100) NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -10,13 +10,13 @@ CREATE TABLE "Role" (
 
 -- CreateTable
 CREATE TABLE "User" (
-    "id" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
     "email" VARCHAR(100) NOT NULL,
     "first_name" VARCHAR(100) NOT NULL,
     "last_name" VARCHAR(100),
     "password" VARCHAR(200) NOT NULL,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
-    "roleId" TEXT NOT NULL,
+    "roleId" INTEGER NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -25,13 +25,13 @@ CREATE TABLE "User" (
 
 -- CreateTable
 CREATE TABLE "Student" (
-    "id" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
     "email" VARCHAR(100) NOT NULL,
     "first_name" VARCHAR(100) NOT NULL,
     "last_name" VARCHAR(100) NOT NULL,
     "address" VARCHAR(100) NOT NULL,
     "phone" VARCHAR(20) NOT NULL,
-    "degreeId" TEXT NOT NULL,
+    "degreeId" INTEGER NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -40,13 +40,13 @@ CREATE TABLE "Student" (
 
 -- CreateTable
 CREATE TABLE "Loan" (
-    "id" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
-    "studentId" TEXT NOT NULL,
-    "bookId" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "userId" INTEGER NOT NULL,
+    "studentId" INTEGER NOT NULL,
+    "bookId" INTEGER NOT NULL,
     "loan_start" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "loan_end" TIMESTAMP(3),
-    "statusId" TEXT NOT NULL,
+    "statusId" INTEGER NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -55,8 +55,8 @@ CREATE TABLE "Loan" (
 
 -- CreateTable
 CREATE TABLE "Loan_Student_History" (
-    "id" TEXT NOT NULL,
-    "loanId" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "loanId" INTEGER NOT NULL,
     "start_date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "end_date" TIMESTAMP(3),
     "action" VARCHAR(100) NOT NULL,
@@ -69,11 +69,10 @@ CREATE TABLE "Loan_Student_History" (
 
 -- CreateTable
 CREATE TABLE "Book" (
-    "id" TEXT NOT NULL,
-    "title" VARCHAR(255) NOT NULL,
+    "id" SERIAL NOT NULL,
     "author" VARCHAR(255) NOT NULL,
     "classification" VARCHAR(100) NOT NULL,
-    "statusId" TEXT NOT NULL,
+    "statusId" INTEGER NOT NULL,
     "stock" INTEGER NOT NULL DEFAULT 0,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -83,7 +82,7 @@ CREATE TABLE "Book" (
 
 -- CreateTable
 CREATE TABLE "Status" (
-    "id" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
     "name" VARCHAR(100) NOT NULL,
     "description" VARCHAR(255) NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -94,7 +93,7 @@ CREATE TABLE "Status" (
 
 -- CreateTable
 CREATE TABLE "University" (
-    "id" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
     "name" VARCHAR(100) NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -104,9 +103,9 @@ CREATE TABLE "University" (
 
 -- CreateTable
 CREATE TABLE "Degree" (
-    "id" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
     "name" VARCHAR(100) NOT NULL,
-    "universityId" TEXT NOT NULL,
+    "universityId" INTEGER NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -115,7 +114,7 @@ CREATE TABLE "Degree" (
 
 -- CreateTable
 CREATE TABLE "Menu" (
-    "id" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
     "label" VARCHAR(100) NOT NULL,
     "icon" VARCHAR(100) NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -126,11 +125,11 @@ CREATE TABLE "Menu" (
 
 -- CreateTable
 CREATE TABLE "Submenu" (
-    "id" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
     "label" VARCHAR(100) NOT NULL,
     "icon" VARCHAR(100) NOT NULL,
     "url" TEXT NOT NULL,
-    "menuId" TEXT NOT NULL,
+    "menuId" INTEGER NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -139,9 +138,9 @@ CREATE TABLE "Submenu" (
 
 -- CreateTable
 CREATE TABLE "Permission" (
-    "id" TEXT NOT NULL,
-    "submenuId" TEXT NOT NULL,
-    "roleId" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "submenuId" INTEGER NOT NULL,
+    "roleId" INTEGER NOT NULL,
     "is_active" BOOLEAN NOT NULL DEFAULT true,
     "name" VARCHAR(100) NOT NULL,
     "description" VARCHAR(255) NOT NULL,
