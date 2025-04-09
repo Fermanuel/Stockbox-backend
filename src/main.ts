@@ -21,8 +21,8 @@ async function bootstrap() {
   
   // documentacion de la api con swagger
   const config = new DocumentBuilder()
-    .setTitle("CRM ADMIN API")
-    .setDescription("API para la administracion de un CRM")
+    .setTitle("BIBLIOTECA API")
+    .setDescription("API para la administracion de una biblioteca")
     .setVersion("1.0.0")
     .addBearerAuth()
     .build();

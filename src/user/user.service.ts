@@ -127,13 +127,14 @@ export class UserService {
   }
 
   async getUserMenus(userId: number) {
-    // Obtener el usuario junto con su rol y permisos asociados
+    // Obtén el usuario con su rol y permisos asociados, filtrando los activos
     const userWithRole = await this.dbService.user.findUnique({
       where: { id: userId },
       select: {
         Role: {
           select: {
             permissions: {
+              where: { is_active: true }, // Filtra directamente los permisos activos
               select: {
                 Submenu: {
                   select: {
@@ -149,7 +150,6 @@ export class UserService {
                     icon: true,
                   },
                 },
-                is_active: true,
               },
             },
           },
@@ -161,22 +161,34 @@ export class UserService {
       throw new Error('Usuario no encontrado');
     }
   
-    // Filtrar los menús y submenús activos
-    const menus = userWithRole.Role.permissions
-      .filter(permission => permission.is_active)
-      .map(permission => ({
-        menu: {
-          id: permission.Submenu.Menu.id,
-          label: permission.Submenu.Menu.label,
-          icon: permission.Submenu.Menu.icon,
-        },
-        submenu: {
-          name: permission.Submenu.label,
-          url: permission.Submenu.url,
-          icon: permission.Submenu.icon,
-        },
-      }));
+    // Reagrupa los permisos por menú para evitar duplicados
+    const groupedMenus = userWithRole.Role.permissions.reduce((acc, permission) => {
+      // Extrae el menú y el submenú del permiso
+      const { Menu } = permission.Submenu;
+      const submenu = {
+        label: permission.Submenu.label,
+        url: permission.Submenu.url,
+        icon: permission.Submenu.icon,
+      };
   
+      // Si el menú no existe en el acumulador, lo crea
+      if (!acc[Menu.id]) {
+        acc[Menu.id] = {
+          id: Menu.id,
+          label: Menu.label,
+          icon: Menu.icon,
+          submenus: [submenu],
+        };
+      } else {
+        // Si ya existe, simplemente añade el submenú
+        acc[Menu.id].submenus.push(submenu);
+      }
+  
+      return acc;
+    }, {} as Record<number, { id: number; label: string; icon: string; submenus: { label: string; url: string; icon: string }[] }>);
+  
+    // Convierte el objeto agrupado a un arreglo
+    const menus = Object.values(groupedMenus);
     return menus;
   }  
 
