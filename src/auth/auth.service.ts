@@ -66,16 +66,15 @@ export class AuthService {
         throw new UnauthorizedException('Contraseña incorrecta');
       }
 
-      // Verificar de menus de acceso
-      const menus = await this.userService.getUserMenus(user.id);
-
       // Excluir el campo password del resultado
-      const { password: _, ...userData } = user;
+      const { Role ,password: _, ...userData } = user;
 
       return {
-        data: userData,
-        menus,
-        token: this.getJwtToken({ id: user.id }),
+        data: {
+          ...userData,
+          role: Role.name, // Aplanamos el objeto 'Role' a solo su nombre
+          token: this.getJwtToken({ id: user.id }),
+        }
       };
 
 
