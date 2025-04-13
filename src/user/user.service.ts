@@ -226,6 +226,33 @@ export class UserService {
     }
   }
 
+  async getAllUsers() {
+    try {
+      const users = await this.dbService.user.findMany({
+        select: {
+          id: true,
+          email: true,
+          first_name: true,
+          last_name: true,
+          isActive: true,
+          Role: {
+            select: {
+              name: true
+            }
+          }
+        }
+      });
+
+      return users.map(user => ({
+        ...user,
+        role: user.Role.name // Aplanamos el objeto 'Role' a solo su nombre
+      }));
+    } catch (error) {
+      this.logger.error(error);
+      this.handleDBError(error);
+    }
+  }
+
 
   // metodo para manejar los errores
   private handleDBError(error: any): never {

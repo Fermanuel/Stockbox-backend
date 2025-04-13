@@ -2,10 +2,10 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, Parse
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Auth } from 'src/auth/decorators/auth.decorator';
-import { Role } from '@prisma/client';
 
+@ApiTags('User')
 @Controller('user')
 export class UserController {
 
@@ -15,7 +15,7 @@ export class UserController {
 
   // ENDPOINT PARA ACTUALIZAR EL ROL
   @ApiBearerAuth()
-  @Auth('ADMINISTRADOR')
+  @Auth('Administrador')
   @Patch('role/:id')
   UpdateUser(@Param('id', ParseIntPipe) id: number, @Body() updateUserDto: UpdateUserDto) {
 
@@ -23,8 +23,8 @@ export class UserController {
   }
 
   // solo el administrador puede registrar usuarios
-  // @ApiBearerAuth()
-  // @Auth('ADMINISTRADOR')
+  @ApiBearerAuth()
+  @Auth('Administrador')
   @Post('register')
   createUser(@Body() createUsuarioDto: CreateUserDto) {
     return this.userService.create(createUsuarioDto);
@@ -32,9 +32,17 @@ export class UserController {
 
   // ENDPOINT PARA DESACTIVAR USUARIOS O ACTIVARLOS
   @ApiBearerAuth()
-  @Auth('ADMINISTRADOR')
+  @Auth('Administrador')
   @Patch('status/:id')
   DesactivUser(@Param('id', ParseIntPipe) id: number) {
     return this.userService.toggleUserStatus(id);
+  }
+
+  // ENDPOINT PARA OBTENER TODOS LOS USUARIOS
+  @ApiBearerAuth()
+  @Auth('Administrador')
+  @Get('all/user')
+  getAllUsers() {
+    return this.userService.getAllUsers();
   }
 }
