@@ -47,7 +47,7 @@ $ npm install
 version: "3.8"
 services:
   postgres:
-    image: postgres:16.2 (select your version)
+    image: postgres:17.4 (select your version)
     container_name: examlpe-db-container
     restart: always
     environment:
@@ -78,7 +78,7 @@ $ npm run start:prod
 
 una vez levantado el servidor visite la siguiente ruta en su navegador:
 
-`http://localhost:3000/docs#/`
+`http://localhost:4000/docs#/`
 
 ## License
 
