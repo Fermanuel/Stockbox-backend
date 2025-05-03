@@ -10,14 +10,14 @@ Este repositorio contiene el código fuente y la documentación del sistema de g
 ```bash
 #usuario de pruebas
 {
-  "email": "test@example.com",
-  "first_name": "test",
-  "last_name": "example",
-  "password": "@Example123",
-  "roles": [
-    "USUARIO"
-  ],
-  "IsActive": true
+  "data": {
+    "id": 1,
+    "email": "manuelhola9@gmail.com",
+    "first_name": "Fernando",
+    "last_name": "Manuel",
+    "role": "Administrador",
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzQ2MzE0NzExLCJleHAiOjE3NDYzMTgzMTF9.zkcXAH7eRevhSjqbi5akWaVZsauUnEeBFolWzPFhSoc"
+  }
 }
 
 ```
