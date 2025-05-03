@@ -126,72 +126,6 @@ export class UserService {
     }
   }
 
-  async getUserMenus(userId: number) {
-    // Obtén el usuario con su rol y permisos asociados, filtrando los activos
-    const userWithRole = await this.dbService.user.findUnique({
-      where: { id: userId },
-      select: {
-        Role: {
-          select: {
-            permissions: {
-              where: { is_active: true }, // Filtra directamente los permisos activos
-              select: {
-                Submenu: {
-                  select: {
-                    Menu: {
-                      select: {
-                        id: true,
-                        label: true,
-                        icon: true,
-                      },
-                    },
-                    label: true,
-                    url: true,
-                    icon: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    });
-  
-    if (!userWithRole) {
-      throw new Error('Usuario no encontrado');
-    }
-  
-    // Reagrupa los permisos por menú para evitar duplicados
-    const groupedMenus = userWithRole.Role.permissions.reduce((acc, permission) => {
-      // Extrae el menú y el submenú del permiso
-      const { Menu } = permission.Submenu;
-      const submenu = {
-        label: permission.Submenu.label,
-        url: permission.Submenu.url,
-        icon: permission.Submenu.icon,
-      };
-  
-      // Si el menú no existe en el acumulador, lo crea
-      if (!acc[Menu.id]) {
-        acc[Menu.id] = {
-          id: Menu.id,
-          label: Menu.label,
-          icon: Menu.icon,
-          submenus: [submenu],
-        };
-      } else {
-        // Si ya existe, simplemente añade el submenú
-        acc[Menu.id].submenus.push(submenu);
-      }
-  
-      return acc;
-    }, {} as Record<number, { id: number; label: string; icon: string; submenus: { label: string; url: string; icon: string }[] }>);
-  
-    // Convierte el objeto agrupado a un arreglo
-    const menus = Object.values(groupedMenus);
-    return menus;
-  }  
-
   // Actualizar el rol del usuario
   async updateUser(id: number, updateUserDto: UpdateUserDto) {
     try {
@@ -228,6 +162,7 @@ export class UserService {
 
   async getAllUsers() {
     try {
+
       const users = await this.dbService.user.findMany({
         select: {
           id: true,
@@ -237,16 +172,17 @@ export class UserService {
           isActive: true,
           Role: {
             select: {
-              name: true
-            }
-          }
-        }
+              name: true,
+            },
+          },
+        },
       });
 
-      return users.map(user => ({
-        ...user,
-        role: user.Role.name // Aplanamos el objeto 'Role' a solo su nombre
+      return users.map(({ Role, ...rest }) => ({
+        ...rest,
+        role: Role.name,
       }));
+      
     } catch (error) {
       this.logger.error(error);
       this.handleDBError(error);

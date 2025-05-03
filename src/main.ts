@@ -21,8 +21,8 @@ async function bootstrap() {
   
   // documentacion de la api con swagger
   const config = new DocumentBuilder()
-    .setTitle("BIBLIOTECA API")
-    .setDescription("API para la administracion de una biblioteca")
+    .setTitle("STOCKBOX API")
+    .setDescription("API para gestionar la aplicacion de stockbox")
     .setVersion("1.0.0")
     .addBearerAuth()
     .build();

@@ -67,7 +67,7 @@ export class AuthService {
       }
 
       // Excluir el campo password del resultado
-      const { Role ,password: _, ...userData } = user;
+      const { Role, password: _, isActive, ...userData } = user;
 
       return {
         data: {

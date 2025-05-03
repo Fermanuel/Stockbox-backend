@@ -27,11 +27,4 @@ export class AuthController {
   checkAuthStatus(@GetUser() user: User) {
     return this.authService.checkAuthStatus(user);
   }
-
-  @Auth()
-  @ApiBearerAuth()
-  @Get('permission/:id')
-  getPermission(@Param('id') id: number) {
-    return this.userService.getUserMenus(id);
-  }
 }

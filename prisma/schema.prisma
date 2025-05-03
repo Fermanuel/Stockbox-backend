@@ -17,165 +17,24 @@ datasource db {
 }
 
 model Role {
-  id          Int       @id @default(autoincrement())
-  name        String    @unique @db.VarChar(100)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id        Int     @id @default(autoincrement())
+  name      String  @unique @db.VarChar(100)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  // Relaciones
-  users       User[]
-  permissions Permission[]
+  users     User[]
 }
 
 model User {
-  id          Int       @id @default(autoincrement())
-  email       String    @unique @db.VarChar(100)
-  first_name  String    @db.VarChar(100)
-  last_name   String?   @db.VarChar(100)
-  password    String    @db.VarChar(200)
-  isActive    Boolean   @default(true)
-  roleId      Int
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id         Int      @id @default(autoincrement())
+  email      String   @unique @db.VarChar(100)
+  first_name String   @db.VarChar(100)
+  last_name  String?  @db.VarChar(100)
+  password   String   @db.VarChar(200)
+  isActive   Boolean  @default(true)
+  roleId     Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
-  // Relaciones
-  Role        Role      @relation(fields: [roleId], references: [id])
-  Loans       Loan[]
-}
-
-model Student {
-  id          Int       @id @default(autoincrement())
-  email       String    @unique @db.VarChar(100)
-  first_name  String    @db.VarChar(100)
-  last_name   String    @db.VarChar(100)
-  address     String    @db.VarChar(100)
-  phone       String    @db.VarChar(20)
-  degreeId    Int
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  // Relaciones
-  Degree      Degree    @relation(fields: [degreeId], references: [id])
-  Loans       Loan[]
-}
-
-model Loan {
-  id          Int       @id @default(autoincrement())
-  userId      Int
-  studentId   Int
-  bookId      Int
-  loan_start  DateTime  @default(now())
-  loan_end    DateTime?
-  statusId    Int
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  // Relaciones
-  User        User      @relation(fields: [userId], references: [id])
-  Student     Student   @relation(fields: [studentId], references: [id])
-  Book        Book      @relation(fields: [bookId], references: [id])
-  Status      Status    @relation(fields: [statusId], references: [id])
-  History     Loan_Student_History[]
-}
-
-model Loan_Student_History {
-  id          Int       @id @default(autoincrement())
-  loanId      Int
-  start_date  DateTime  @default(now())
-  end_date    DateTime?
-  action      String    @db.VarChar(100)
-  details     String    @db.VarChar(255)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  // Relaciones
-  Loan        Loan      @relation(fields: [loanId], references: [id])
-}
-
-model Book {
-  id             Int       @id @default(autoincrement())
-  author         String    @db.VarChar(255)
-  classification String    @db.VarChar(100)
-  statusId       Int
-  stock          Int       @default(0)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-
-  // Relaciones
-  Status         Status    @relation(fields: [statusId], references: [id])
-  Loans          Loan[]
-}
-
-model Status {
-  id          Int       @id @default(autoincrement())
-  name        String    @unique @db.VarChar(100)
-  description String    @db.VarChar(255)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  // Relaciones
-  Loans       Loan[]
-  Books       Book[]
-}
-
-model University {
-  id          Int       @id @default(autoincrement())
-  name        String    @unique @db.VarChar(100)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  // Relaciones
-  Degrees     Degree[]
-}
-
-model Degree {
-  id             Int       @id @default(autoincrement())
-  name           String    @unique @db.VarChar(100)
-  universityId   Int
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-
-  // Relaciones
-  University     University @relation(fields: [universityId], references: [id])
-  Students       Student[]
-}
-
-model Menu {
-  id          Int       @id @default(autoincrement())
-  label       String    @unique @db.VarChar(100) // corresponde a "Nombre"
-  icon        String    @db.VarChar(100)         // corresponde a "Icono"
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  // Relaciones
-  Submenus    Submenu[]
-}
-
-model Submenu {
-  id          Int       @id @default(autoincrement())
-  label       String    @unique @db.VarChar(100) // corresponde a "Nombre"
-  icon        String    @db.VarChar(100)
-  url         String    @db.Text                // se utiliza en lugar de "NombreFormulario"
-  menuId      Int
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  // Relaciones
-  Menu        Menu      @relation(fields: [menuId], references: [id])
-  Permissions Permission[]
-}
-
-model Permission {
-  id          Int       @id @default(autoincrement())
-  submenuId   Int
-  roleId      Int
-  is_active   Boolean   @default(true)
-  name        String    @unique @db.VarChar(100)
-  description String    @db.VarChar(255)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  // Relaciones
-  Submenu     Submenu   @relation(fields: [submenuId], references: [id])
-  Role        Role      @relation(fields: [roleId], references: [id])
+  Role       Role     @relation(fields: [roleId], references: [id])
 }
