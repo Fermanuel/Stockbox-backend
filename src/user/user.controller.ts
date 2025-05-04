@@ -23,7 +23,7 @@ export class UserController {
   }
 
   // solo el administrador puede registrar usuarios
-  //@ApiBearerAuth()
+  @ApiBearerAuth()
   @Auth('Administrador')
   @Post('register')
   createUser(@Body() createUsuarioDto: CreateUserDto) {
