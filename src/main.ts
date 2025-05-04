@@ -10,7 +10,9 @@ async function bootstrap() {
   // prefijo de la api para todas las rutas
   app.setGlobalPrefix('api/');
 
-  // validacion de los datos de entrada
+  app.enableCors();
+  
+    // validacion de los datos de entrada
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
