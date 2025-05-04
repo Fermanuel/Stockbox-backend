@@ -23,8 +23,8 @@ export class UserController {
   }
 
   // solo el administrador puede registrar usuarios
-  // @ApiBearerAuth()
-  // @Auth('Administrador')
+  @ApiBearerAuth()
+  @Auth('Administrador')
   @Post('register')
   createUser(@Body() createUsuarioDto: CreateUserDto) {
     return this.userService.create(createUsuarioDto);
@@ -39,8 +39,8 @@ export class UserController {
   }
 
   // ENDPOINT PARA OBTENER TODOS LOS USUARIOS
-  // @ApiBearerAuth()
-  // @Auth('Administrador')
+  @ApiBearerAuth()
+  @Auth('Administrador')
   @Get('all/user')
   getAllUsers() {
     return this.userService.getAllUsers();
