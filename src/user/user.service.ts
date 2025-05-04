@@ -30,6 +30,7 @@ export class UserService {
 
       // Obtener roleId del DTO, o asignar por defecto "BIBLIOTECARIO" si no se proporcionó
       let { roleId } = rest;
+      
       if (!roleId) {
         const defaultRole = await this.dbService.role.findUnique({
           where: { name: 'BIBLIOTECARIO' },
