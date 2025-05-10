@@ -1,8 +1,7 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
-import { DbService } from 'src/db/db.service';
-import { Role } from '@prisma/client';
+import { DbService } from 'src/db/db.service'; 
 
 @Injectable()
 export class RoleService {
@@ -12,7 +11,25 @@ export class RoleService {
   ) { }
 
   create(createRoleDto: CreateRoleDto) {
-    return 'This action adds a new role';
+  
+    try {
+      // verificar si el rol ya existe
+      const roleExists = this.dbService.role.findUnique({
+        where: { name: createRoleDto.name },
+      });
+
+      if (roleExists) {
+        throw new BadRequestException(`Role ${createRoleDto.name} already exists`);
+      }
+
+      // crear el rol
+      return this.dbService.role.create({
+        data: createRoleDto,
+      });
+    }
+    catch (error) {
+      this.handleDBError(error);
+    }
   }
 
   async findAll() {
@@ -46,11 +63,45 @@ export class RoleService {
   }
 
   update(id: number, updateRoleDto: UpdateRoleDto) {
-    return `This action updates a #${id} role`;
+    try {
+      const role = this.dbService.role.findUnique({
+        where: { id },
+      });
+
+      if (!role) {
+        throw new BadRequestException(`Role not found`);
+      }
+
+      return this.dbService.role.update({
+        where: { id },
+        data: updateRoleDto,
+      });
+    }
+    catch (error) {
+      this.handleDBError(error);
+    }
   }
 
   remove(id: number) {
-    return `This action removes a #${id} role`;
+  
+    try {
+      const role = this.dbService.role.findUnique({
+        where: { id },
+      });
+
+      if (!role) {
+        throw new BadRequestException(`Role not found`);
+      }
+
+      return this.dbService.role.update({
+        data: { isActive: false },
+        where: { id },
+      });
+    }
+    catch (error) {
+      this.handleDBError(error);
+    }
+
   }
 
   // metodo para manejar los errores
