@@ -53,6 +53,11 @@ export class CategoryService {
         where: {
           isActive: true
         },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+        }
       });
 
       if(!categories)
