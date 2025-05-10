@@ -13,12 +13,12 @@ export class RoleController {
 
   @ApiBearerAuth()
   @Auth('Administrador')
-  @Post()
+  @Post('create')
   create(@Body() createRoleDto: CreateRoleDto) {
     return this.roleService.create(createRoleDto);
   }
 
-  @Get()
+  @Get('all')
   @ApiOkResponse({
     description: 'Rol encontrado',
     type: RoleResponseDto,
@@ -27,7 +27,7 @@ export class RoleController {
     return this.roleService.findAll();
   }
 
-  @Get(':id')
+  @Get('find-one/:id')
   @ApiOkResponse({
     description: 'Rol encontrado',
     type: RoleResponseDto,
@@ -38,14 +38,14 @@ export class RoleController {
 
   @ApiBearerAuth()
   @Auth('Administrador')
-  @Patch(':id')
+  @Patch('update/:id')
   update(@Param('id', ParseIntPipe) id: number, @Body() updateRoleDto: UpdateRoleDto) {
     return this.roleService.update(id, updateRoleDto);
   }
 
   @ApiBearerAuth()
   @Auth('Administrador')
-  @Delete(':id')
+  @Delete('delete/:id')
   remove(@Param('id') id: string) {
     return this.roleService.remove(+id);
   }

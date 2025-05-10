@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
-import { DbService } from 'src/db/db.service'; 
+import { DbService } from 'src/db/db.service';
 
 @Injectable()
 export class RoleService {
@@ -13,7 +13,7 @@ export class RoleService {
   ) { }
 
   create(createRoleDto: CreateRoleDto) {
-  
+
     try {
       // verificar si el rol ya existe
       const roleExists = this.dbService.role.findUnique({
@@ -31,7 +31,7 @@ export class RoleService {
     }
     catch (error) {
       this.logger.error(error);
-      
+
       // manejar el error
       this.handleDBError(error);
     }
@@ -48,7 +48,7 @@ export class RoleService {
         throw new BadRequestException(`No roles found`);
       }
 
-      return roles.map(({ updatedAt ,createdAt ,isActive, ...rest }) => rest);
+      return roles.map(({ updatedAt, createdAt, isActive, ...rest }) => rest);
     }
     catch (error) {
 
@@ -104,7 +104,7 @@ export class RoleService {
   }
 
   remove(id: number) {
-  
+
     try {
       const role = this.dbService.role.findUnique({
         where: { id },
@@ -128,13 +128,19 @@ export class RoleService {
 
   }
 
-  // metodo para manejar los errores
   private handleDBError(error: any): never {
+    
+    if (error instanceof BadRequestException) {
+      // Ya es una excepción con código 400
+      throw error;
+    }
 
     if (error.code === '23505') {
+      // Violación de unicidad → 400 Bad Request
       throw new BadRequestException(error.detail);
     }
 
+    // Cualquier otro error → 500 Internal Server Error
     throw new InternalServerErrorException('Error en la base de datos');
   }
 }
