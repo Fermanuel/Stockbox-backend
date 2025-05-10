@@ -2,7 +2,6 @@ import { BadRequestException, Injectable, InternalServerErrorException, Logger }
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { DbService } from 'src/db/db.service';
-import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -12,7 +11,6 @@ export class UserService {
 
   constructor(
     private readonly dbService: DbService,
-    private readonly jwtService: JwtService
   ) { }
 
   async create(createUsuarioDto: CreateUserDto) {
@@ -30,7 +28,7 @@ export class UserService {
 
       // Obtener roleId del DTO, o asignar por defecto "BIBLIOTECARIO" si no se proporcionó
       let { roleId } = rest;
-      
+
       if (!roleId) {
         const defaultRole = await this.dbService.role.findUnique({
           where: { name: 'BIBLIOTECARIO' },
@@ -127,32 +125,45 @@ export class UserService {
     }
   }
 
-  // Actualizar el rol del usuario
+  // Actualizar el rol de un usuario
   async updateUser(id: number, updateUserDto: UpdateUserDto) {
     try {
-      // Se extrae roleId del DTO, en lugar de roles
-      const { roleId } = updateUserDto;
-
-      // Buscar usuario en la base de datos
-      const user = await this.dbService.user.findUnique({
+      // 1️⃣ Verificar existencia del usuario
+      const existing = await this.dbService.user.findUnique({
         where: { id },
-        select: { id: true, roleId: true }
+        select: { id: true }
       });
-
-      if (!user) {
+      if (!existing) {
         throw new BadRequestException('Usuario no encontrado');
       }
 
-      // Actualizar el rol del usuario
-      const updatedUser = await this.dbService.user.update({
+      // 2️⃣ Preparar el objeto data
+      // Copiamos todas las propiedades del DTO; Prisma ignorará las que sean undefined
+      const data: Partial<UpdateUserDto> = { ...updateUserDto };
+
+      // 2.a️⃣ Si llega contraseña, la hasheamos
+      if (updateUserDto.password) {
+        data.password = await bcrypt.hash(updateUserDto.password, 10);
+      }
+
+      // 3️⃣ Ejecutar la actualización genérica
+      const updated = await this.dbService.user.update({
         where: { id },
-        data: { roleId }
+        data,
+        include: {
+          Role: { select: { name: true } },  // si también quieres devolver el nombre del rol
+        },
       });
 
-      // Excluir el campo password del resultado
-      const { password, ...userData } = updatedUser;
+      // 4️⃣ Filtrar campos sensibles
+      const { password, roleId, Role, ...rest } = updated;
 
-      return { data: userData };
+      return {
+        data: {
+          ...rest,
+          role: Role?.name,  // opcional: aplanar la relación Role
+        },
+      };
 
     } catch (error) {
       this.logger.error(error);
@@ -160,6 +171,7 @@ export class UserService {
       this.handleDBError(error);
     }
   }
+
 
   async getAllUsers() {
     try {
@@ -183,7 +195,7 @@ export class UserService {
         ...rest,
         role: Role.name,
       }));
-      
+
     } catch (error) {
       this.logger.error(error);
       this.handleDBError(error);

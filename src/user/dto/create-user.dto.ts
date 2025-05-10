@@ -1,5 +1,12 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsBoolean, IsEmail, IsNumber, IsOptional, IsString, IsStrongPassword, MaxLength, MinLength } from "class-validator";
+import { 
+  IsEmail, 
+  IsNumber, 
+  IsOptional, 
+  IsString, 
+  IsStrongPassword, 
+  MaxLength, 
+  MinLength 
+} from "class-validator";
 
 export class CreateUserDto {
   @IsString()
@@ -22,12 +29,7 @@ export class CreateUserDto {
   @IsStrongPassword()
   password: string;
 
-  // En lugar de enviar un array de roles, ahora se envía el id del rol.
   @IsNumber()
   @IsOptional()
   roleId?: number;
-
-  @IsBoolean()
-  @IsOptional()
-  IsActive?: boolean;
 }

@@ -14,17 +14,17 @@ export class UserController {
   ) { }
 
   // ENDPOINT PARA ACTUALIZAR EL ROL
-  @ApiBearerAuth()
-  @Auth('Administrador')
-  @Patch('role/:id')
+  //@ApiBearerAuth()
+  //@Auth('Administrador')
+  @Patch('update/:id')
   UpdateUser(@Param('id', ParseIntPipe) id: number, @Body() updateUserDto: UpdateUserDto) {
 
     return this.userService.updateUser(id, updateUserDto);
   }
 
   // solo el administrador puede registrar usuarios
-  @ApiBearerAuth()
-  @Auth('Administrador')
+  //@ApiBearerAuth()
+  //@Auth('Administrador')
   @Post('register')
   createUser(@Body() createUsuarioDto: CreateUserDto) {
     return this.userService.create(createUsuarioDto);
@@ -39,9 +39,9 @@ export class UserController {
   }
 
   // ENDPOINT PARA OBTENER TODOS LOS USUARIOS
-  @ApiBearerAuth()
-  @Auth('Administrador')
-  @Get('all/user')
+  //@ApiBearerAuth()
+  //@Auth('Administrador')
+  @Get('all')
   getAllUsers() {
     return this.userService.getAllUsers();
   }
