@@ -1,10 +1,12 @@
-import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { DbService } from 'src/db/db.service'; 
 
 @Injectable()
 export class RoleService {
+
+  private readonly logger = new Logger(RoleService.name);
 
   constructor(
     private readonly dbService: DbService,
@@ -28,18 +30,30 @@ export class RoleService {
       });
     }
     catch (error) {
+      this.logger.error(error);
+      
+      // manejar el error
       this.handleDBError(error);
     }
   }
 
   async findAll() {
     try {
-      return await this.dbService.role.findMany({
+
+      const roles = await this.dbService.role.findMany({
         where: { isActive: true },
-        orderBy: { name: 'asc' },
       });
+
+      if (!roles) {
+        throw new BadRequestException(`No roles found`);
+      }
+
+      return roles.map(({ updatedAt ,createdAt ,isActive, ...rest }) => rest);
     }
     catch (error) {
+
+      this.logger.error(error);
+
       this.handleDBError(error);
     }
   }
@@ -56,14 +70,12 @@ export class RoleService {
         throw new BadRequestException(`Role not found`);
       }
 
-      return await this.dbService.role.findFirst({
-        where: {
-          id,
-          isActive: true,
-        },
-      });
+      const { updatedAt, createdAt, isActive, ...rest } = role;
+      return rest;
     }
     catch (error) {
+      this.logger.error(error);
+
       this.handleDBError(error);
     }
   }
@@ -84,6 +96,9 @@ export class RoleService {
       });
     }
     catch (error) {
+
+      this.logger.error(error);
+
       this.handleDBError(error);
     }
   }
@@ -105,6 +120,9 @@ export class RoleService {
       });
     }
     catch (error) {
+
+      this.logger.error(error);
+
       this.handleDBError(error);
     }
 

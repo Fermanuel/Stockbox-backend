@@ -1,10 +1,10 @@
-import { IsNumber, IsString } from "class-validator";
+import { IsNotEmpty, IsNumber, IsString, Max, Min } from "class-validator";
 
 export class CreateRoleDto {
 
-    @IsNumber()
-    id: number;
-
     @IsString()
+    @IsNotEmpty()
+    @Min(3)
+    @Max(50) 
     name: string;
 }

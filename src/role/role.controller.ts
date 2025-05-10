@@ -2,8 +2,9 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe } from 
 import { RoleService } from './role.service';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { Auth } from 'src/auth/decorators/auth.decorator';
+import { RoleResponseDto } from './dto/role-responose.dto';
 
 @ApiTags('Role')
 @Controller('role')
@@ -17,16 +18,20 @@ export class RoleController {
     return this.roleService.create(createRoleDto);
   }
 
-  @ApiBearerAuth()
-  @Auth('Administrador')
   @Get()
+  @ApiOkResponse({
+    description: 'Rol encontrado',
+    type: RoleResponseDto,
+  })
   findAll() {
     return this.roleService.findAll();
   }
 
-  @ApiBearerAuth()
-  @Auth('Administrador')
   @Get(':id')
+  @ApiOkResponse({
+    description: 'Rol encontrado',
+    type: RoleResponseDto,
+  })
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.roleService.findOne(id);
   }
