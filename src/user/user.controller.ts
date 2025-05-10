@@ -4,6 +4,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { Auth } from 'src/auth/decorators/auth.decorator';
+import { UserResponseDto } from './dto/user-response.dto';
 
 @ApiTags('User')
 @Controller('user')
@@ -42,6 +43,11 @@ export class UserController {
   @ApiBearerAuth()
   @Auth('Administrador')
   @Get('all')
+  @ApiOkResponse({
+    description: 'Listado completo de usuarios',
+    type: UserResponseDto,
+    isArray: true,
+  })
   getAllUsers() {
     return this.userService.getAllUsers();
   }
