@@ -48,4 +48,18 @@ export class ProductResponseDto {
     category?: {
         name: string; // Nombre de la categoría
     };
+
+    @ApiProperty({
+        example: 10,
+        description: 'Cantidad en inventario',
+    })
+    quantity: number; // Cantidad en inventario
+    
+    @ApiProperty({
+        example: 'Almacén de ejemplo',
+        description: 'Nombre del almacén',
+    })
+    warehouse?: {
+        name: string; // Nombre del almacén
+    };
 }

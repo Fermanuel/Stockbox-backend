@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsInt, MaxLength, IsDate, IsNotEmpty } from 'class-validator';
+import { IsString, IsOptional, IsInt, MaxLength, IsNotEmpty, IsNumber } from 'class-validator';
 
 export class CreateProductDto {
     @IsString()
@@ -18,4 +18,10 @@ export class CreateProductDto {
     @IsInt()
     @IsOptional()
     categoryId?: number; // Relación opcional con categoría
+
+    @IsNumber()
+    quantity: number; // Cantidad en inventario
+
+    @IsNumber()
+    warehouseId: number; // Relación con almacén
 }
