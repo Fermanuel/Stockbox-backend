@@ -18,12 +18,4 @@ export class CreateProductDto {
     @IsInt()
     @IsOptional()
     categoryId?: number; // Relación opcional con categoría
-
-    @IsDate()
-    @IsOptional()
-    createdAt?: Date; // Fecha de creación
-
-    @IsDate()
-    @IsOptional()
-    updatedAt?: Date; // Fecha de actualización
 }

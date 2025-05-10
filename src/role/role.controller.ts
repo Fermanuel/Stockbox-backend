@@ -7,12 +7,13 @@ import { Auth } from 'src/auth/decorators/auth.decorator';
 import { RoleResponseDto } from './dto/role-responose.dto';
 
 @ApiTags('Role')
+@ApiBearerAuth()
+  @Auth('Administrador')
 @Controller('role')
 export class RoleController {
   constructor(private readonly roleService: RoleService) {}
 
-  @ApiBearerAuth()
-  @Auth('Administrador')
+
   @Post('create')
   create(@Body() createRoleDto: CreateRoleDto) {
     return this.roleService.create(createRoleDto);
@@ -36,15 +37,11 @@ export class RoleController {
     return this.roleService.findOne(id);
   }
 
-  @ApiBearerAuth()
-  @Auth('Administrador')
   @Patch('update/:id')
   update(@Param('id', ParseIntPipe) id: number, @Body() updateRoleDto: UpdateRoleDto) {
     return this.roleService.update(id, updateRoleDto);
   }
 
-  @ApiBearerAuth()
-  @Auth('Administrador')
   @Delete('delete/:id')
   remove(@Param('id') id: string) {
     return this.roleService.remove(+id);
