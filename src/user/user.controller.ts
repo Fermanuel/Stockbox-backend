@@ -15,8 +15,8 @@ export class UserController {
   ) { }
 
   // ENDPOINT PARA ACTUALIZAR EL ROL
-  //@ApiBearerAuth()
-  //@Auth('Administrador')
+  @ApiBearerAuth()
+  @Auth('Administrador')
   @Patch('update/:id')
   UpdateUser(@Param('id', ParseIntPipe) id: number, @Body() updateUserDto: UpdateUserDto) {
 
@@ -24,8 +24,8 @@ export class UserController {
   }
 
   // solo el administrador puede registrar usuarios
-  //@ApiBearerAuth()
-  //@Auth('Administrador')
+  @ApiBearerAuth()
+  @Auth('Administrador')
   @Post('register')
   createUser(@Body() createUsuarioDto: CreateUserDto) {
     return this.userService.create(createUsuarioDto);

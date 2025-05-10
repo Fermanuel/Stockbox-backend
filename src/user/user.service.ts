@@ -152,14 +152,18 @@ export class UserService {
           last_name: true,
           isActive: true,
           Role: {
-            select: { name: true }
-          }
+            select: {
+              name: true,
+            },
+          },
         },
       });
 
+      const {Role, ...rest } = updated;
+
       return {
-        data: {
-          ...updated,
+        user: {
+          ...rest,
           role: updated.Role.name,
         },
       };
