@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, Parse
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 
 @ApiTags('User')
@@ -39,8 +39,8 @@ export class UserController {
   }
 
   // ENDPOINT PARA OBTENER TODOS LOS USUARIOS
-  //@ApiBearerAuth()
-  //@Auth('Administrador')
+  @ApiBearerAuth()
+  @Auth('Administrador')
   @Get('all')
   getAllUsers() {
     return this.userService.getAllUsers();
