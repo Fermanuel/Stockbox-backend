@@ -24,8 +24,7 @@ export class UserController {
   }
 
   // solo el administrador puede registrar usuarios
-  @ApiBearerAuth()
-  @Auth('Administrador')
+
   @Post('register')
   createUser(@Body() createUsuarioDto: CreateUserDto) {
     return this.userService.create(createUsuarioDto);
