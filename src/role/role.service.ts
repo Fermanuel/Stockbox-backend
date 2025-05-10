@@ -34,7 +34,10 @@ export class RoleService {
 
   async findAll() {
     try {
-      return await this.dbService.role.findMany();
+      return await this.dbService.role.findMany({
+        where: { isActive: true },
+        orderBy: { name: 'asc' },
+      });
     }
     catch (error) {
       this.handleDBError(error);
@@ -46,15 +49,18 @@ export class RoleService {
     try {
 
       const role = await this.dbService.role.findUnique({
-        where: { id },
+        where: { id }
       });
 
       if (!role) {
         throw new BadRequestException(`Role not found`);
       }
 
-      return await this.dbService.role.findUnique({
-        where: { id },
+      return await this.dbService.role.findFirst({
+        where: {
+          id,
+          isActive: true,
+        },
       });
     }
     catch (error) {
