@@ -13,12 +13,11 @@ export class ProductService {
     private readonly dbService: DbService,
   ) { }
 
-
   async create(createProductDto: CreateProductDto) {
 
     try {
       const { name, sku, description, categoryId } = createProductDto;
-      
+
       // Verificar si el SKU ya existe
       const existingProduct = await this.dbService.product.findUnique({
         where: { sku },
@@ -47,17 +46,30 @@ export class ProductService {
   }
 
   async findAll() {
-    
-    try
-    {
+
+    try {
+
       const products = await this.dbService.product.findMany({
         where: { isActive: true },
         orderBy: { createdAt: 'desc' },
-        include: {
-          category: true,
+        select: {
+          id: true,
+          sku: true,
+          name: true,
+          description: true,
+          createdAt: true,
+          updatedAt: true,
+          category: {
+            select: {
+              name: true,
+            },
+          },
         },
       });
 
+      if (!products) {
+        throw new BadRequestException(`No se encontraron productos`);
+      }
       return products;
     }
     catch (error) {
@@ -67,13 +79,23 @@ export class ProductService {
   }
 
   async findOne(id: number) {
-    
+
     try {
       const product = await this.dbService.product.findUnique({
         where: { id, isActive: true },
-        include: {
-          category: true,
-        },
+        select: {
+          id: true,
+          sku: true,
+          name: true,
+          description: true,
+          createdAt: true,
+          updatedAt: true,
+          category: {
+            select: {
+              name: true,
+            },
+          },
+        }
       });
 
       if (!product) {
@@ -112,6 +134,10 @@ export class ProductService {
         },
       });
 
+      if (!product) {
+        throw new BadRequestException(`Product not found`);
+      }
+
       return product;
     }
     catch (error) {
@@ -128,6 +154,10 @@ export class ProductService {
           isActive: false,
         },
       });
+
+      if (!product) {
+        throw new BadRequestException(`Product not found`);
+      }
 
       return product;
     }
