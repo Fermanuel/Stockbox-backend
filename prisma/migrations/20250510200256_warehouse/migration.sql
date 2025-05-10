@@ -2,6 +2,7 @@
 CREATE TABLE "Role" (
     "id" SERIAL NOT NULL,
     "name" VARCHAR(100) NOT NULL,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
