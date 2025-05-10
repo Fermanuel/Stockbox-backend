@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { DbService } from 'src/db/db.service';
@@ -41,23 +41,110 @@ export class CategoryService {
       };
 
     } catch (error) {
-      
+      this.logger.error(error);
+      this.handleDBError(error);
     }
   }
 
   async findAll() {
-    return `This action returns all category`;
-  }
+    try {
+    
+      const categories = await this.dbService.category.findMany({
+        where: {
+          isActive: true
+        },
+      });
 
-  async findOne(id: number) {
-    return `This action returns a #${id} category`;
+      if(!categories)
+      {
+        return new BadRequestException('No categories found');
+      }
+
+      return categories;
+
+    } catch (error) {
+      this.logger.error(error);
+      this.handleDBError(error);
+      
+    }
   }
 
   async update(id: number, updateCategoryDto: UpdateCategoryDto) {
-    return `This action updates a #${id} category`;
+    try {
+    
+      const category = await this.dbService.category.findUnique({
+        where: {
+          id
+        }
+      });
+
+      if (!category) {
+        return new BadRequestException('Category not found');
+      }
+
+      const updatedCategory = await this.dbService.category.update({
+        where: {
+          id
+        },
+        data: {
+          name: updateCategoryDto.name,
+          description: updateCategoryDto.description ? updateCategoryDto.description : 'No description',
+        }
+      });
+
+      return updatedCategory;
+
+
+    } catch (error) {
+      this.logger.error(error);
+      this.handleDBError(error);
+    }
   }
 
   async remove(id: number) {
-    return `This action removes a #${id} category`;
+    try {
+    
+      const category = await this.dbService.category.findUnique({
+        where: {
+          id
+        }
+      });
+
+      if (!category) {
+        return new BadRequestException('Category not found');
+      }
+
+      const deletedCategory = await this.dbService.category.update({
+        where: {
+          id
+        },
+        data: {
+          isActive: false
+        }
+      });
+
+      return deletedCategory;
+
+    } catch (error) {
+      this.logger.error(error);
+      this.handleDBError(error);
+      
+    }
   }
+
+  private handleDBError(error: any): never {
+  
+      if (error instanceof BadRequestException) {
+        // Ya es una excepción con código 400
+        throw error;
+      }
+  
+      if (error.code === '23505') {
+        // Violación de unicidad → 400 Bad Request
+        throw new BadRequestException(error.detail);
+      }
+  
+      // Cualquier otro error → 500 Internal Server Error
+      throw new InternalServerErrorException('Error en la base de datos');
+    }
 }
