@@ -8,10 +8,10 @@ import { RoleResponseDto } from './dto/role-responose.dto';
 
 @ApiTags('Role')
 @ApiBearerAuth()
-  @Auth('Administrador')
+@Auth('Administrador')
 @Controller('role')
 export class RoleController {
-  constructor(private readonly roleService: RoleService) {}
+  constructor(private readonly roleService: RoleService) { }
 
 
   @Post('create')

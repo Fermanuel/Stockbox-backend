@@ -2,9 +2,11 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe } from 
 import { CategoryService } from './category.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { CategoryResponseDto } from './dto/category-response.dto';
 
 @ApiTags('Category')
+@ApiBearerAuth()
 @Controller('category')
 export class CategoryController {
 
@@ -16,6 +18,11 @@ export class CategoryController {
   }
 
   @Get()
+    @ApiOkResponse({
+      description: 'List of categories',
+      status: 200,
+      type: CategoryResponseDto,
+    })
   findAll() {
     return this.categoryService.findAll();
   }
