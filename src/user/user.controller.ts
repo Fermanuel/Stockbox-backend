@@ -7,8 +7,8 @@ import { Auth } from 'src/auth/decorators/auth.decorator';
 import { UserResponseDto } from './dto/user-response.dto';
 
 @ApiTags('User')
-@ApiBearerAuth()
-@Auth('Administrador')
+//@ApiBearerAuth()
+//@Auth('Administrador')
 @Controller('user')
 export class UserController {
 

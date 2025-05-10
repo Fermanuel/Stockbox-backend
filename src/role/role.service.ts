@@ -12,11 +12,11 @@ export class RoleService {
     private readonly dbService: DbService,
   ) { }
 
-  create(createRoleDto: CreateRoleDto) {
+  async create(createRoleDto: CreateRoleDto) {
 
     try {
       // verificar si el rol ya existe
-      const roleExists = this.dbService.role.findUnique({
+      const roleExists = await this.dbService.role.findUnique({
         where: { name: createRoleDto.name },
       });
 
