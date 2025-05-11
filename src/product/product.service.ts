@@ -149,72 +149,85 @@ export class ProductService {
     }
   }
 
-  async update(id: number, updateProductDto: UpdateProductDto) {
+  async update(id: number, dto: UpdateProductDto) {
     try {
-      const { sku, name, description, categoryId, quantity, warehouseId } = updateProductDto;
 
-      const updatedProduct = await this.dbService.$transaction(async (tx) => {
-        
-        // 1) Buscar por ID, no por SKU:
-        const existingProduct = await tx.product.findUnique({
-          where: { id },
-        });
-        if (!existingProduct) {
-          throw new BadRequestException(`Producto con ID ${id} no encontrado`);
+      const { sku, name, description, categoryId, quantity, warehouseId } = dto;
+
+      // 1) Realiza la transacción
+      const raw = await this.dbService.$transaction(async tx => {
+
+        // a) Verifica existencia y SKU idéntico al ejemplo anterior...
+        const existing = await tx.product.findUnique({ where: { id } });
+        if (!existing) throw new BadRequestException(`Producto ${id} no existe`);
+        if (sku !== undefined && sku !== existing.sku) {
+          const inUse = await tx.product.findUnique({ where: { sku } });
+          if (inUse) throw new BadRequestException(`SKU ${sku} en uso`);
         }
 
-        // 2) Sólo verificar SKU si viene definido y cambió:
-        if (sku !== undefined && sku !== existingProduct.sku) {
-          const skuInUse = await tx.product.findUnique({
-            where: { sku },
-          });
-          if (skuInUse) {
-            throw new BadRequestException(`El SKU ${sku} ya está en uso`);
-          }
-        }
-
-        // 3) Preparar datos de producto:
+        // b) Construye productData igual que antes, incluyendo upsert de stock
         const productData: Prisma.ProductUpdateInput = {};
-
+        
         if (sku !== undefined) productData.sku = sku;
         if (name !== undefined) productData.name = name;
         if (description !== undefined) productData.description = description;
         if (categoryId !== undefined) productData.category = { connect: { id: categoryId } };
-
-        // 4) Upsert de stock (si vienen ambos campos):
+        
         if (warehouseId !== undefined && quantity !== undefined) {
           productData.stocks = {
             upsert: {
-              where: {
-                productId_warehouseId: { productId: id, warehouseId },
-              },
-              update: {
-                quantity,
-                updatedAt: new Date(),
-              },
-              create: {
-                warehouse: { connect: { id: warehouseId } },
-                quantity,
-              },
-            },
+              where: { productId_warehouseId: { productId: id, warehouseId } },
+              update: { quantity, updatedAt: new Date() },
+              create: { warehouse: { connect: { id: warehouseId } }, quantity },
+            }
           };
         }
 
-        // 5) Ejecutar update e incluir stocks:
+        // c) Ejecuta update con select
         return tx.product.update({
           where: { id },
           data: productData,
-          include: { stocks: true },
+          select: {
+            id: true,
+            sku: true,
+            name: true,
+            description: true,
+            createdAt: true,
+            updatedAt: true,
+            category: {
+              select: { name: true }
+            },
+            stocks: {
+              where: { warehouseId },
+              select: {
+                quantity: true,
+                warehouse: { select: { name: true } }
+              }
+            }
+          }
         });
       });
 
-      return updatedProduct;
+      // 2) Aplana
+      const stockEntry = (raw.stocks && raw.stocks[0]) || { quantity: null, warehouse: { name: null } };
 
+      return {
+        id: raw.id,
+        sku: raw.sku,
+        name: raw.name,
+        description: raw.description,
+        createdAt: raw.createdAt,
+        updatedAt: raw.updatedAt,
+        categoryName: raw.category?.name ?? null,
+        warehouseName: stockEntry.warehouse.name,
+        quantity: stockEntry.quantity,
+      };
     } catch (error) {
       this.logger.error(error);
       this.handleDBError(error);
     }
   }
+
 
 
   async remove(id: number) {
