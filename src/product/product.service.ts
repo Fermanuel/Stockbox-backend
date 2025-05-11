@@ -151,39 +151,102 @@ export class ProductService {
 
   async update(id: number, updateProductDto: UpdateProductDto) {
     try {
-      const { name, sku, description, categoryId } = updateProductDto;
+      const {
+        sku,
+        name,
+        description,
+        categoryId,
+        quantity,
+        warehouseId,
+      } = updateProductDto;
 
-      // Verificar si el SKU ya existe
-      const existingProduct = await this.dbService.product.findUnique({
-        where: { sku },
+      // Ejecutamos todo dentro de una transacción
+      const result = await this.dbService.$transaction(async (tx) => {
+        // 1. Comprobar existencia del producto
+        const existingProduct = await tx.product.findUnique({
+          where: { id },
+        });
+        if (!existingProduct) {
+          throw new BadRequestException(`Producto con ID ${id} no encontrado`);
+        }
+
+        // 2. Verificar SKU si cambió
+        if (sku && sku !== existingProduct.sku) {
+          const skuInUse = await tx.product.findUnique({
+            where: { sku },
+          });
+          if (skuInUse) {
+            throw new BadRequestException(`El SKU ${sku} ya está en uso`);
+          }
+        }
+
+        // 3. Construir objeto de datos para el producto
+        const dataToUpdate: Partial<{
+          sku: string;
+          name: string;
+          description: string;
+          categoryId: number;
+        }> = {};
+        if (sku !== undefined) dataToUpdate.sku = sku;
+        if (name !== undefined) dataToUpdate.name = name;
+        if (description !== undefined) dataToUpdate.description = description;
+        if (categoryId !== undefined) dataToUpdate.categoryId = categoryId;
+
+        // 4. Actualizar producto si hay cambios
+        let updatedProduct = existingProduct;
+        if (Object.keys(dataToUpdate).length > 0) {
+          updatedProduct = await tx.product.update({
+            where: { id },
+            data: dataToUpdate,
+          });
+        }
+
+        // 5. Actualizar o crear stock si se proporcionan ambos campos
+        if (warehouseId !== undefined && quantity !== undefined) {
+          const existingStock = await tx.stock.findUnique({
+            where: {
+              productId_warehouseId: {
+                productId: id,
+                warehouseId,
+              },
+            },
+          });
+
+          if (existingStock) {
+            await tx.stock.update({
+              where: {
+                productId_warehouseId: {
+                  productId: id,
+                  warehouseId,
+                },
+              },
+              data: {
+                quantity,
+                updatedAt: new Date(),
+              },
+            });
+          } else {
+            await tx.stock.create({
+              data: {
+                productId: id,
+                warehouseId,
+                quantity,
+              },
+            });
+          }
+        }
+
+        // 6. Devolver el producto actualizado
+        return updatedProduct;
       });
 
-      if (existingProduct) {
-        throw new BadRequestException(`El SKU ${sku} ya está en uso`);
-      }
-
-      // Actualizar el producto
-      const product = await this.dbService.product.update({
-        where: { id },
-        data: {
-          name,
-          sku,
-          description,
-          categoryId,
-        },
-      });
-
-      if (!product) {
-        throw new BadRequestException(`Product not found`);
-      }
-
-      return product;
-    }
-    catch (error) {
+      return result;
+    } catch (error) {
       this.logger.error(error);
       this.handleDBError(error);
     }
   }
+
 
   async remove(id: number) {
     try {
