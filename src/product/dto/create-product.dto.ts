@@ -22,7 +22,9 @@ export class CreateProductDto {
     @IsNumber()
     quantity: number; // Cantidad en inventario
 
-    @IsNumber()
+
     @ValidateIf(o => o.quantity !== undefined)
-    warehouseId: number; // Relación con almacén
+    @IsNumber({}, { message: 'Si especificas quantity, debes incluir también warehouseId' })
+    @IsNotEmpty({ message: 'warehouseId es obligatorio cuando actualizas quantity' })
+    warehouseId?: number;
 }

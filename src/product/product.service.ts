@@ -153,6 +153,12 @@ export class ProductService {
 
       const { sku, name, description, categoryId, quantity, warehouseId } = dto;
 
+      if (quantity !== undefined && warehouseId === undefined) {
+        throw new BadRequestException(
+          'Defines product warehouse when you update the quantity',
+        );
+      }
+
       // 1) Realiza la transacción
       const raw = await this.dbService.$transaction(async tx => {
 
@@ -166,12 +172,12 @@ export class ProductService {
 
         // b) Construye productData igual que antes, incluyendo upsert de stock
         const productData: Prisma.ProductUpdateInput = {};
-        
+
         if (sku !== undefined) productData.sku = sku;
         if (name !== undefined) productData.name = name;
         if (description !== undefined) productData.description = description;
         if (categoryId !== undefined) productData.category = { connect: { id: categoryId } };
-        
+
         if (warehouseId !== undefined && quantity !== undefined) {
           productData.stocks = {
             upsert: {
