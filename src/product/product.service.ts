@@ -7,7 +7,6 @@ import { Prisma } from '@prisma/client';
 @Injectable()
 export class ProductService {
 
-  // logger: Logger = new Logger(ProductService.name);
   private readonly logger = new Logger(ProductService.name);
 
   constructor(
@@ -227,8 +226,6 @@ export class ProductService {
       this.handleDBError(error);
     }
   }
-
-
 
   async remove(id: number) {
     try {
