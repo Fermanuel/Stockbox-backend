@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsInt, MaxLength, IsNotEmpty, IsNumber } from 'class-validator';
+import { IsString, IsOptional, IsInt, MaxLength, IsNotEmpty, IsNumber, ValidateIf } from 'class-validator';
 
 export class CreateProductDto {
     @IsString()
@@ -23,5 +23,6 @@ export class CreateProductDto {
     quantity: number; // Cantidad en inventario
 
     @IsNumber()
+    @ValidateIf(o => o.quantity !== undefined)
     warehouseId: number; // Relación con almacén
 }

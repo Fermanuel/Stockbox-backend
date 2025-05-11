@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, InternalServerErrorException, Logger }
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { DbService } from 'src/db/db.service';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class ProductService {
@@ -54,7 +55,6 @@ export class ProductService {
       this.handleDBError(error);
     }
   }
-
 
   async findAll() {
     try {
@@ -151,18 +151,11 @@ export class ProductService {
 
   async update(id: number, updateProductDto: UpdateProductDto) {
     try {
-      const {
-        sku,
-        name,
-        description,
-        categoryId,
-        quantity,
-        warehouseId,
-      } = updateProductDto;
+      const { sku, name, description, categoryId, quantity, warehouseId } = updateProductDto;
 
-      // Ejecutamos todo dentro de una transacción
-      const result = await this.dbService.$transaction(async (tx) => {
-        // 1. Comprobar existencia del producto
+      const updatedProduct = await this.dbService.$transaction(async (tx) => {
+        
+        // 1) Buscar por ID, no por SKU:
         const existingProduct = await tx.product.findUnique({
           where: { id },
         });
@@ -170,8 +163,8 @@ export class ProductService {
           throw new BadRequestException(`Producto con ID ${id} no encontrado`);
         }
 
-        // 2. Verificar SKU si cambió
-        if (sku && sku !== existingProduct.sku) {
+        // 2) Sólo verificar SKU si viene definido y cambió:
+        if (sku !== undefined && sku !== existingProduct.sku) {
           const skuInUse = await tx.product.findUnique({
             where: { sku },
           });
@@ -180,67 +173,43 @@ export class ProductService {
           }
         }
 
-        // 3. Construir objeto de datos para el producto
-        const dataToUpdate: Partial<{
-          sku: string;
-          name: string;
-          description: string;
-          categoryId: number;
-        }> = {};
-        if (sku !== undefined) dataToUpdate.sku = sku;
-        if (name !== undefined) dataToUpdate.name = name;
-        if (description !== undefined) dataToUpdate.description = description;
-        if (categoryId !== undefined) dataToUpdate.categoryId = categoryId;
+        // 3) Preparar datos de producto:
+        const productData: Prisma.ProductUpdateInput = {};
 
-        // 4. Actualizar producto si hay cambios
-        let updatedProduct = existingProduct;
-        if (Object.keys(dataToUpdate).length > 0) {
-          updatedProduct = await tx.product.update({
-            where: { id },
-            data: dataToUpdate,
-          });
-        }
+        if (sku !== undefined) productData.sku = sku;
+        if (name !== undefined) productData.name = name;
+        if (description !== undefined) productData.description = description;
+        if (categoryId !== undefined) productData.category = { connect: { id: categoryId } };
 
-        // 5. Actualizar o crear stock si se proporcionan ambos campos
+        // 4) Upsert de stock (si vienen ambos campos):
         if (warehouseId !== undefined && quantity !== undefined) {
-          const existingStock = await tx.stock.findUnique({
-            where: {
-              productId_warehouseId: {
-                productId: id,
-                warehouseId,
-              },
-            },
-          });
-
-          if (existingStock) {
-            await tx.stock.update({
+          productData.stocks = {
+            upsert: {
               where: {
-                productId_warehouseId: {
-                  productId: id,
-                  warehouseId,
-                },
+                productId_warehouseId: { productId: id, warehouseId },
               },
-              data: {
+              update: {
                 quantity,
                 updatedAt: new Date(),
               },
-            });
-          } else {
-            await tx.stock.create({
-              data: {
-                productId: id,
-                warehouseId,
+              create: {
+                warehouse: { connect: { id: warehouseId } },
                 quantity,
               },
-            });
-          }
+            },
+          };
         }
 
-        // 6. Devolver el producto actualizado
-        return updatedProduct;
+        // 5) Ejecutar update e incluir stocks:
+        return tx.product.update({
+          where: { id },
+          data: productData,
+          include: { stocks: true },
+        });
       });
 
-      return result;
+      return updatedProduct;
+
     } catch (error) {
       this.logger.error(error);
       this.handleDBError(error);
