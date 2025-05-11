@@ -23,7 +23,7 @@ export class ProductService {
       });
 
       if (existingProduct) {
-        throw new BadRequestException(`El SKU ${sku} ya está en uso`);
+        throw new BadRequestException(`This SKU already exists`);
       }
 
       // Crear el producto y su stock asociado en una transacción
@@ -76,7 +76,7 @@ export class ProductService {
       });
 
       if (!products || products.length === 0) {
-        throw new BadRequestException(`No se encontraron productos`);
+        throw new BadRequestException(`Products not found`);
       }
 
       // Aplanar completamente los datos
@@ -123,7 +123,7 @@ export class ProductService {
       });
 
       if (!products || products.length === 0) {
-        throw new BadRequestException(`No se encontraron productos`);
+        throw new BadRequestException(`Product not found`);
       }
 
       // Aplanar completamente los datos
