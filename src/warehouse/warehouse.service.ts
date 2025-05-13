@@ -59,6 +59,23 @@ export class WarehouseService {
     }
   }
 
+  async getAllWarehouses() {
+    try {
+      const warehouses = await this.dbService.warehouse.findMany({
+        select: {
+          id: true,
+          name: true
+        },
+      });
+
+      return warehouses;
+      
+    } catch (error) {
+      this.logger.error(error);
+      this.handleDBError(error);
+    }
+  }
+
   private handleDBError(error: any): never {
 
     if (error instanceof BadRequestException) {
