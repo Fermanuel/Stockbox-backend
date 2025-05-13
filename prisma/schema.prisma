@@ -17,12 +17,13 @@ datasource db {
 }
 
 model Role {
-  id        Int     @id @default(autoincrement())
-  name      String  @unique @db.VarChar(100)
+  id        Int      @id @default(autoincrement())
+  name      String   @unique @db.VarChar(100)
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  users     User[]
+  users User[] // Relación: un rol puede asociarse a muchos usuarios
 }
 
 model User {
@@ -36,5 +37,111 @@ model User {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  Role       Role     @relation(fields: [roleId], references: [id])
+  Role Role @relation(fields: [roleId], references: [id])
+
+  StockAudit StockAudit[]
+  Transfer   Transfer[]
+  Warehouse  Warehouse[]
+}
+
+// Warehouse: almacén físico o lógico donde se guarda stock
+model Warehouse {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique @db.VarChar(100)
+  address   String?  @db.VarChar(255) // Dirección o descripción de la ubicación
+  managerId Int? // Usuario responsable del almacén
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  manager       User?      @relation(fields: [managerId], references: [id])
+  stocks        Stock[] // Relación: un almacén tiene múltiples registros de stock
+  transfersFrom Transfer[] @relation("TransferFrom") // Transferencias que salen de este almacén
+  transfersTo   Transfer[] @relation("TransferTo") // Transferencias que llegan a este almacén
+}
+
+// Category: categoría para agrupar productos y facilitar reportes
+model Category {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique @db.VarChar(100)
+  isActive    Boolean  @default(true)
+  description String?  @db.Text // Descripción de la categoría
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  products Product[] // Relación: una categoría agrupa muchos productos
+}
+
+// Product: catálogo de artículos con SKU para identificar ítems únicos
+model Product {
+  id          Int      @id @default(autoincrement())
+  sku         String   @unique @db.VarChar(50) // Código único de inventario
+  name        String   @db.VarChar(150) // Nombre descriptivo
+  description String?  @db.Text // Detalles adicionales
+  categoryId  Int? // Relación opcional con categoría
+  isActive    Boolean  @default(true) // Estado activo/inactivo
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  category        Category?        @relation(fields: [categoryId], references: [id])
+  stocks          Stock[] // Relación: stock de este producto en distintos almacenes
+  transferDetails TransferDetail[] // Relación: líneas de transferencias que incluyen este producto
+}
+
+// Stock: registro de cantidad actual de cada producto en cada almacén
+model Stock {
+  id          Int      @id @default(autoincrement())
+  productId   Int
+  warehouseId Int
+  quantity    Float    @default(0) // Permite unidades parciales si es necesario
+  updatedAt   DateTime @default(now()) // Fecha de última actualización
+
+  product   Product      @relation(fields: [productId], references: [id])
+  warehouse Warehouse    @relation(fields: [warehouseId], references: [id])
+  audits    StockAudit[] // Relación: historial de cambios en este registro de stock
+
+  @@unique([productId, warehouseId]) // Un solo registro de stock por par producto–almacén
+}
+
+// Transfer: encabezado de transferencia de stock entre dos almacenes
+model Transfer {
+  id            Int      @id @default(autoincrement())
+  createdAt     DateTime @default(now()) // Fecha en que se creó la transferencia
+  fromWarehouse Int // ID del almacén de origen
+  toWarehouse   Int // ID del almacén de destino
+  userId        Int // Usuario que inició la transferencia
+  status        String   @default("PENDING") @db.VarChar(20) // Estado: PENDING, COMPLETED, CANCELLED
+  notes         String?  @db.Text // Observaciones opcionales
+
+  from    Warehouse        @relation("TransferFrom", fields: [fromWarehouse], references: [id])
+  to      Warehouse        @relation("TransferTo", fields: [toWarehouse], references: [id])
+  user    User             @relation(fields: [userId], references: [id])
+  details TransferDetail[] // Relación: líneas de productos en la transferencia
+
+  StockAudit StockAudit[]
+}
+
+// TransferDetail: detalle de cada ítem y cantidad en una transferencia
+model TransferDetail {
+  id         Int   @id @default(autoincrement())
+  transferId Int // Llave foránea a Transfer
+  productId  Int // Producto que se mueve
+  quantity   Float // Cantidad movida, debe ser > 0
+
+  transfer Transfer @relation(fields: [transferId], references: [id], onDelete: Cascade)
+  product  Product  @relation(fields: [productId], references: [id])
+}
+
+// StockAudit: historial de auditoría que registra cambios de stock
+model StockAudit {
+  id         Int      @id @default(autoincrement())
+  stockId    Int // Referencia al registro de Stock afectado
+  change     Float // Cambio positivo o negativo
+  occurredAt DateTime @default(now()) // Fecha del cambio
+  transferId Int? // Opcional: vínculo a Transfer si aplica
+  userId     Int // Usuario que generó el cambio
+  reason     String?  @db.VarChar(100) // Motivo breve del ajuste
+
+  stock    Stock     @relation(fields: [stockId], references: [id])
+  transfer Transfer? @relation(fields: [transferId], references: [id])
+  user     User      @relation(fields: [userId], references: [id])
 }

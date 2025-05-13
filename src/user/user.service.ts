@@ -125,10 +125,10 @@ export class UserService {
     }
   }
 
-  // Actualizar el rol de un usuario
+
   async updateUser(id: number, updateUserDto: UpdateUserDto) {
     try {
-      // 1️⃣ Verificar existencia del usuario
+
       const existing = await this.dbService.user.findUnique({
         where: { id },
         select: { id: true }
@@ -137,31 +137,34 @@ export class UserService {
         throw new BadRequestException('Usuario no encontrado');
       }
 
-      // 2️⃣ Preparar el objeto data
-      // Copiamos todas las propiedades del DTO; Prisma ignorará las que sean undefined
       const data: Partial<UpdateUserDto> = { ...updateUserDto };
-
-      // 2.a️⃣ Si llega contraseña, la hasheamos
       if (updateUserDto.password) {
         data.password = await bcrypt.hash(updateUserDto.password, 10);
       }
 
-      // 3️⃣ Ejecutar la actualización genérica
       const updated = await this.dbService.user.update({
         where: { id },
         data,
-        include: {
-          Role: { select: { name: true } },  // si también quieres devolver el nombre del rol
+        select: {
+          id: true,
+          email: true,
+          first_name: true,
+          last_name: true,
+          isActive: true,
+          Role: {
+            select: {
+              name: true,
+            },
+          },
         },
       });
 
-      // 4️⃣ Filtrar campos sensibles
-      const { password, roleId, Role, ...rest } = updated;
+      const {Role, ...rest } = updated;
 
       return {
-        data: {
+        user: {
           ...rest,
-          role: Role?.name,  // opcional: aplanar la relación Role
+          role: updated.Role.name,
         },
       };
 
@@ -201,7 +204,6 @@ export class UserService {
       this.handleDBError(error);
     }
   }
-
 
   // metodo para manejar los errores
   private handleDBError(error: any): never {
