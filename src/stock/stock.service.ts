@@ -19,6 +19,7 @@ export class StockService {
       const { fromWarehouse, toWarehouse, userId, notes, details } = dto;
 
       return await this.dbService.$transaction(async (tx) => {
+
         // 1. Crear encabezado de la transferencia
         const transfer = await tx.transfer.create({
           data: { fromWarehouse, toWarehouse, userId, notes },
@@ -113,8 +114,38 @@ export class StockService {
     }
   }
 
-  findAll() {
-    return `This action returns all stock`;
+  async findAllTransferStock(): Promise<any[]> {
+    const transfers = await this.dbService.transfer.findMany({
+      include: {
+        from: true,        // almacén de origen
+        to: true,          // almacén de destino
+        user: true,        // usuario que creó
+        details: {
+          include: { product: true }  // incluir nombre de producto
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return transfers.map(t => ({
+      id: t.id,
+      fromWarehouseId: t.fromWarehouse,
+      fromWarehouseName: t.from.name,
+      toWarehouseId: t.toWarehouse,
+      toWarehouseName: t.to.name,
+      userId: t.userId,
+      userEmail: t.user.email,
+      userFirstName: t.user.first_name,
+      userLastName: t.user.last_name,
+      status: t.status,
+      notes: t.notes,
+      details: t.details.map(d => ({
+        productId: d.productId,
+        productName: d.product.name,
+        quantity: d.quantity,
+      })),
+      createdAt: t.createdAt
+    }));
   }
 
   findOne(id: number) {

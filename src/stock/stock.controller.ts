@@ -14,10 +14,10 @@ export class StockController {
     return this.stockService.createTrasferStock(createStockDto);
   }
 
-  // @Get()
-  // findAll() {
-  //   return this.stockService.findAll();
-  // }
+  @Get('all-transfer')
+  findAll() {
+    return this.stockService.findAllTransferStock();
+  }
 
   // @Get(':id')
   // findOne(@Param('id') id: string) {
