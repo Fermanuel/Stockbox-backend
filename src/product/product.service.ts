@@ -233,6 +233,7 @@ export class ProductService {
     }
   }
 
+  // TODO: Cambiar a soft delete ya que se debe de elimar de una alamacen en específico
   async remove(id: number) {
     try {
       const product = await this.dbService.product.update({

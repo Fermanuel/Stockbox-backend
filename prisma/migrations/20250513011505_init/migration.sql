@@ -40,6 +40,7 @@ CREATE TABLE "Warehouse" (
 CREATE TABLE "Category" (
     "id" SERIAL NOT NULL,
     "name" VARCHAR(100) NOT NULL,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
     "description" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
