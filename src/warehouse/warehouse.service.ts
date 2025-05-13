@@ -12,18 +12,6 @@ export class WarehouseService {
     private readonly dbService: DbService,
   ) { }
 
-  create(createWarehouseDto: CreateWarehouseDto) {
-    return 'This action adds a new warehouse';
-  }
-
-  findAll() {
-    return `This action returns all warehouse`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} warehouse`;
-  }
-
   async updateManagerWarehouse(managerId: number, warehouseId: number) {
 
     try {
@@ -69,10 +57,6 @@ export class WarehouseService {
       this.logger.error(error);
       this.handleDBError(error);
     }
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} warehouse`;
   }
 
   private handleDBError(error: any): never {

@@ -3,30 +3,19 @@ import { WarehouseService } from './warehouse.service';
 import { CreateWarehouseDto } from './dto/create-warehouse.dto';
 import { UpdateWarehouseDto } from './dto/update-warehouse.dto';
 import { parse } from 'path';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Auth } from 'src/auth/decorators/auth.decorator';
 
 @ApiTags('Warehouse')
+@ApiBearerAuth()
+@Auth('Administrador')
 @Controller('warehouse')
 export class WarehouseController {
   constructor(private readonly warehouseService: WarehouseService) { }
 
-  // @Post()
-  // create(@Body() createWarehouseDto: CreateWarehouseDto) {
-  //   return this.warehouseService.create(createWarehouseDto);
-  // }
-
-  // @Get()
-  // findAll() {
-  //   return this.warehouseService.findAll();
-  // }
-
-  // @Get(':id')
-  // findOne(@Param('id') id: string) {
-  //   return this.warehouseService.findOne(+id);
-  // }
 
   @Patch('update/manager/:managerId/:warehouseId')
-  update(
+  updateManagerWarehouse(
     @Param('managerId', ParseIntPipe) managerId: number,
     @Param('warehouseId', ParseIntPipe) warehouseId: number,
   ) {
