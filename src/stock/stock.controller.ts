@@ -19,7 +19,7 @@ export class StockController {
     return this.stockService.findAllTransferStock();
   }
 
-  @Patch(':id/complete')
+  @Patch('complete-transfer/:id')
   complete(@Param('id', ParseIntPipe) id: number) {
     return this.stockService.completeTransfer(id);
   }
