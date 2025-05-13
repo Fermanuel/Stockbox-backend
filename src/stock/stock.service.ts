@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CreateStockDto } from './dto/create-stock.dto';
 import { UpdateStockDto } from './dto/update-stock.dto';
 import { DbService } from 'src/db/db.service';
@@ -148,8 +148,48 @@ export class StockService {
     }));
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} stock`;
+  async completeTransfer(id: number): Promise<any> {
+    // Verificar que exista la transferencia
+    const existing = await this.dbService.transfer.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException(`Transferencia con ID ${id} no encontrada`);
+    }
+    if (existing.status === 'COMPLETED') {
+      throw new BadRequestException('La transferencia ya está completada');
+    }
+
+    // Actualizar el estado
+    const updated = await this.dbService.transfer.update({
+      where: { id },
+      data: { status: 'COMPLETED' },
+      include: {
+        from: true,
+        to: true,
+        user: true,
+        details: { include: { product: true } },
+      },
+    });
+
+    // Retornar objeto plano similar a findAll
+    return {
+      id: updated.id,
+      fromWarehouseId: updated.fromWarehouse,
+      fromWarehouseName: updated.from.name,
+      toWarehouseId: updated.toWarehouse,
+      toWarehouseName: updated.to.name,
+      userId: updated.userId,
+      userEmail: updated.user.email,
+      userFirstName: updated.user.first_name,
+      userLastName: updated.user.last_name,
+      status: updated.status,
+      notes: updated.notes,
+      createdAt: updated.createdAt,
+      details: updated.details.map(d => ({
+        productId: d.productId,
+        productName: d.product.name,
+        quantity: d.quantity,
+      })),
+    };
   }
 
   update(id: number, updateStockDto: UpdateStockDto) {
