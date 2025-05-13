@@ -7,8 +7,8 @@ import { Auth } from 'src/auth/decorators/auth.decorator';
 import { RoleResponseDto } from './dto/role-responose.dto';
 
 @ApiTags('Role')
-//@ApiBearerAuth()
-//@Auth('Administrador')
+@ApiBearerAuth()
+@Auth('Administrador')
 @Controller('role')
 export class RoleController {
   constructor(private readonly roleService: RoleService) { }
