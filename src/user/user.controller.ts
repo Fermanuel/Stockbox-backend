@@ -4,8 +4,11 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { Auth } from 'src/auth/decorators/auth.decorator';
+import { UserResponseDto } from './dto/user-response.dto';
 
 @ApiTags('User')
+//@ApiBearerAuth()
+//@Auth('Administrador')
 @Controller('user')
 export class UserController {
 
@@ -14,8 +17,6 @@ export class UserController {
   ) { }
 
   // ENDPOINT PARA ACTUALIZAR EL ROL
-  //@ApiBearerAuth()
-  //@Auth('Administrador')
   @Patch('update/:id')
   UpdateUser(@Param('id', ParseIntPipe) id: number, @Body() updateUserDto: UpdateUserDto) {
 
@@ -23,25 +24,24 @@ export class UserController {
   }
 
   // solo el administrador puede registrar usuarios
-  //@ApiBearerAuth()
-  //@Auth('Administrador')
   @Post('register')
   createUser(@Body() createUsuarioDto: CreateUserDto) {
     return this.userService.create(createUsuarioDto);
   }
 
   // ENDPOINT PARA DESACTIVAR USUARIOS O ACTIVARLOS
-  @ApiBearerAuth()
-  @Auth('Administrador')
   @Patch('status/:id')
   DesactivUser(@Param('id', ParseIntPipe) id: number) {
     return this.userService.toggleUserStatus(id);
   }
 
   // ENDPOINT PARA OBTENER TODOS LOS USUARIOS
-  @ApiBearerAuth()
-  @Auth('Administrador')
   @Get('all')
+  @ApiOkResponse({
+    description: 'Listado completo de usuarios',
+    type: UserResponseDto,
+    isArray: true,
+  })
   getAllUsers() {
     return this.userService.getAllUsers();
   }
