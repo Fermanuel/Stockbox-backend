@@ -6,7 +6,7 @@ import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { CategoryResponseDto } from './dto/category-response.dto';
 
 @ApiTags('Category')
-//@ApiBearerAuth()
+@ApiBearerAuth()
 @Controller('category')
 export class CategoryController {
 
