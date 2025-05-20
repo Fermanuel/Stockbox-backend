@@ -29,6 +29,6 @@ export class StockController {
   async withdraw(
     @Body() stockDto: WithdrawStockDto,
   ) {
-    return this.stockService.withdrawStock(stockDto, 2121071);
+    return this.stockService.withdrawStock(stockDto, 1);
   }
 }

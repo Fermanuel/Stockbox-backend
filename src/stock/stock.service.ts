@@ -203,17 +203,20 @@ export class StockService {
     };
   }
 
-  async withdrawStock(
-    dto: WithdrawStockDto,
-    userId: number,        // <— añadir este parámetro
-  ) {
+  async withdrawStock(dto: WithdrawStockDto, userId: number) {
     const { warehouseId, stockId, quantity } = dto;
-
     if (quantity <= 0) {
       throw new BadRequestException('La cantidad debe ser mayor que cero');
     }
 
     return this.dbService.$transaction(async (tx) => {
+      // Verificar usuario
+      const user = await tx.user.findUnique({ where: { id: userId } });
+      if (!user) {
+        throw new BadRequestException(`Usuario ${userId} no encontrado`);
+      }
+
+      // Verificar stock
       const stockRecord = await tx.stock.findUnique({
         where: { id: stockId },
         select: { quantity: true, warehouseId: true },
@@ -224,6 +227,8 @@ export class StockService {
       if (stockRecord.quantity < quantity) {
         throw new BadRequestException('Cantidad insuficiente en inventario');
       }
+
+      // Actualizar stock
       const updatedStock = await tx.stock.update({
         where: { id: stockId },
         data: {
@@ -231,15 +236,18 @@ export class StockService {
           updatedAt: new Date(),
         },
       });
+
+      // Crear auditoría
       await tx.stockAudit.create({
         data: {
           stockId,
           change: -quantity,
           occurredAt: new Date(),
-          userId,
+          userId,              // ahora válido
           reason: 'Retiro de stock',
         },
       });
+
       return updatedStock;
     });
   }
