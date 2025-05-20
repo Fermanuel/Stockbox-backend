@@ -75,7 +75,6 @@ export class ProductService {
     const flattened = products.flatMap(product =>
       product.stocks.map(stock => ({
         id: stock.id,
-        productId: product.id,
         sku: product.sku,
         name: product.name,
         description: product.description,
