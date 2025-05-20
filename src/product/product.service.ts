@@ -56,50 +56,40 @@ export class ProductService {
   }
 
   async findAll() {
-    try {
-      const products = await this.dbService.product.findMany({
-        where: { isActive: true },
-        orderBy: { createdAt: 'desc' },
-        include: {
-          category: {
-            select: { name: true },
-          },
-          stocks: {
-            select: {
-              quantity: true,
-              warehouse: {
-                select: { name: true },
-              },
-            },
+    const products = await this.dbService.product.findMany({
+      where: { isActive: true },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        category: { select: { name: true } },
+        stocks: {
+          select: {
+            id: true,
+            quantity: true,
+            warehouse: { select: { name: true } },
           },
         },
-      });
+      },
+    });
 
-      if (!products || products.length === 0) {
-        throw new BadRequestException(`Products not found`);
-      }
+    // Aplanamos y usamos stock.id como id único
+    const flattened = products.flatMap(product =>
+      product.stocks.map(stock => ({
+        id: stock.id,
+        productId: product.id,
+        sku: product.sku,
+        name: product.name,
+        description: product.description,
+        createdAt: product.createdAt,
+        updatedAt: product.updatedAt,
+        categoryName: product.category?.name ?? null,
+        warehouseName: stock.warehouse.name,
+        quantity: stock.quantity,
+      }))
+    );
 
-      // Aplanar completamente los datos
-      const flattenedProducts = products.flatMap((product) =>
-        product.stocks.map((stock) => ({
-          id: product.id,
-          sku: product.sku,
-          name: product.name,
-          description: product.description,
-          createdAt: product.createdAt,
-          updatedAt: product.updatedAt,
-          categoryName: product.category?.name || null,
-          warehouseName: stock.warehouse.name,
-          quantity: stock.quantity,
-        }))
-      );
-
-      return flattenedProducts;
-    } catch (error) {
-      this.logger.error(error);
-      this.handleDBError(error);
-    }
+    return flattened;
   }
+
 
   async findOne(id: number) {
 
