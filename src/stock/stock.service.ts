@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, Logger, NotFoundException } from '@nes
 import { CreateStockDto } from './dto/create-stock.dto';
 import { UpdateStockDto } from './dto/update-stock.dto';
 import { DbService } from 'src/db/db.service';
+import { WithdrawStockDto } from './dto/withdrawStock.dto';
 
 @Injectable()
 export class StockService {
@@ -13,105 +14,115 @@ export class StockService {
   ) { }
 
   async createTrasferStock(dto: CreateStockDto) {
+    const { fromWarehouse, toWarehouse, userId, notes, details } = dto;
 
-    try {
+    if (fromWarehouse === toWarehouse) {
+      throw new BadRequestException('El almacén de origen y destino no pueden ser el mismo');
+    }
 
-      const { fromWarehouse, toWarehouse, userId, notes, details } = dto;
+    return this.dbService.$transaction(async (tx) => {
+      // 1. Crear encabezado de la transferencia
+      const transfer = await tx.transfer.create({
+        data: { fromWarehouse, toWarehouse, userId, notes },
+      });
 
-      return await this.dbService.$transaction(async (tx) => {
+      // 2. Procesar cada línea de detalle
+      for (const item of details) {
+        const { stockId, quantity } = item;
 
-        // 1. Crear encabezado de la transferencia
-        const transfer = await tx.transfer.create({
-          data: { fromWarehouse, toWarehouse, userId, notes },
+        if (quantity <= 0) {
+          throw new BadRequestException('La cantidad debe ser mayor que cero');
+        }
+
+        // 2.1. Obtener registro de stock origen
+        const stockFrom = await tx.stock.findUnique({
+          where: { id: stockId },
+          select: { id: true, productId: true, warehouseId: true, quantity: true },
         });
 
-        // 2. Procesar cada línea de detalle
-        for (const item of details) {
-          const { productId, quantity } = item;
+        if (!stockFrom || stockFrom.warehouseId !== fromWarehouse) {
+          throw new BadRequestException(`Stock ${stockId} no encontrado en el almacén de origen`);
+        }
 
-          if (quantity <= 0) {
-            throw new BadRequestException('La cantidad debe ser mayor que cero');
-          }
+        if (stockFrom.quantity < quantity) {
+          throw new BadRequestException(`Stock insuficiente (ID ${stockId})`);
+        }
 
-          // 2.1. Obtener stock origen
-          const stockFrom = await tx.stock.findUnique({
-            where: { productId_warehouseId: { productId, warehouseId: fromWarehouse } },
-          });
-          if (!stockFrom || stockFrom.quantity < quantity) {
-            throw new BadRequestException(`Stock insuficiente para producto ${productId}`);
-          }
+        // 2.2. Actualizar stock en origen
+        await tx.stock.update({
+          where: { id: stockId },
+          data: {
+            quantity: { decrement: quantity },
+            updatedAt: new Date(),
+          },
+        });
 
-          // 2.2. Actualizar stock en origen
-          await tx.stock.update({
-            where: { id: stockFrom.id },
-            data: { quantity: stockFrom.quantity - quantity, updatedAt: new Date() },
-          });
-          // Registrar auditoría negativa
-          await tx.stockAudit.create({
+        // Auditoría negativa
+        await tx.stockAudit.create({
+          data: {
+            stockId,
+            change: -quantity,
+            transferId: transfer.id,
+            userId,
+            reason: 'TRANSFER_OUT',
+          },
+        });
+
+        // 2.3. Obtener o crear stock en destino para el mismo producto
+        let stockTo = await tx.stock.findFirst({
+          where: {
+            productId: stockFrom.productId,
+            warehouseId: toWarehouse,
+          },
+        });
+
+        if (!stockTo) {
+          stockTo = await tx.stock.create({
             data: {
-              stockId: stockFrom.id,
-              change: -quantity,
-              transferId: transfer.id,
-              userId,
-              reason: 'TRANSFER_OUT',
-            },
-          });
-
-          // 2.3. Obtener o crear stock en destino
-          let stockTo = await tx.stock.findUnique({
-            where: { productId_warehouseId: { productId, warehouseId: toWarehouse } },
-          });
-          if (!stockTo) {
-            stockTo = await tx.stock.create({
-              data: {
-                productId,
-                warehouseId: toWarehouse,
-                quantity: 0,
-              },
-            });
-          }
-          // Actualizar stock en destino
-          await tx.stock.update({
-            where: { id: stockTo.id },
-            data: { quantity: stockTo.quantity + quantity, updatedAt: new Date() },
-          });
-          // Registrar auditoría positiva
-          await tx.stockAudit.create({
-            data: {
-              stockId: stockTo.id,
-              change: +quantity,
-              transferId: transfer.id,
-              userId,
-              reason: 'TRANSFER_IN',
-            },
-          });
-
-          // 2.4. Crear detalle de transferencia
-          await tx.transferDetail.create({
-            data: {
-              transferId: transfer.id,
-              productId,
-              quantity,
+              productId: stockFrom.productId,
+              warehouseId: toWarehouse,
+              quantity: 0,
             },
           });
         }
 
-        // 3. Al terminar, devolver la transferencia con sus detalles
-        return tx.transfer.findUnique({
-          where: { id: transfer.id },
-          include: {
-            details: { include: { product: true } },
-            from: true,
-            to: true,
-            user: true,
+        // 2.4. Actualizar stock en destino
+        await tx.stock.update({
+          where: { id: stockTo.id },
+          data: {
+            quantity: { increment: quantity },
+            updatedAt: new Date(),
           },
         });
-      });
 
-    } catch (error) {
-      this.logger.error(error);
-      throw error;
-    }
+        // Auditoría positiva
+        await tx.stockAudit.create({
+          data: {
+            stockId: stockTo.id,
+            change: quantity,
+            transferId: transfer.id,
+            userId,
+            reason: 'TRANSFER_IN',
+          },
+        });
+
+        // 2.5. Crear detalle de transferencia
+        await tx.transferDetail.create({
+          data: {
+            transferId: transfer.id,
+            productId: stockFrom.productId,
+            quantity,
+          },
+        });
+      }
+
+      // 3. Devolver la transferencia ya con sus relaciones
+      return { message: 'Transferencia realizada exitosamente' };
+    })
+      .catch(error => {
+        this.logger.error('Error al crear transferencia', error);
+        throw error;
+      });
   }
 
   async findAllTransferStock(): Promise<any[]> {
@@ -192,11 +203,44 @@ export class StockService {
     };
   }
 
-  update(id: number, updateStockDto: UpdateStockDto) {
-    return `This action updates a #${id} stock`;
-  }
+  async withdrawStock(
+    dto: WithdrawStockDto,
+    userId: number,        // <— añadir este parámetro
+  ) {
+    const { warehouseId, stockId, quantity } = dto;
 
-  remove(id: number) {
-    return `This action removes a #${id} stock`;
+    if (quantity <= 0) {
+      throw new BadRequestException('La cantidad debe ser mayor que cero');
+    }
+
+    return this.dbService.$transaction(async (tx) => {
+      const stockRecord = await tx.stock.findUnique({
+        where: { id: stockId },
+        select: { quantity: true, warehouseId: true },
+      });
+      if (!stockRecord || stockRecord.warehouseId !== warehouseId) {
+        throw new BadRequestException('Stock no encontrado en el almacén indicado');
+      }
+      if (stockRecord.quantity < quantity) {
+        throw new BadRequestException('Cantidad insuficiente en inventario');
+      }
+      const updatedStock = await tx.stock.update({
+        where: { id: stockId },
+        data: {
+          quantity: { decrement: quantity },
+          updatedAt: new Date(),
+        },
+      });
+      await tx.stockAudit.create({
+        data: {
+          stockId,
+          change: -quantity,
+          occurredAt: new Date(),
+          userId,
+          reason: 'Retiro de stock',
+        },
+      });
+      return updatedStock;
+    });
   }
 }

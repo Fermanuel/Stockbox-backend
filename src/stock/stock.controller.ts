@@ -1,9 +1,10 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, Req } from '@nestjs/common';
 import { StockService } from './stock.service';
 import { CreateStockDto } from './dto/create-stock.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { WithdrawStockDto } from './dto/withdrawStock.dto';
 
-@ApiBearerAuth()
+//@ApiBearerAuth()
 @ApiTags('Stock')
 @Controller('stock')
 export class StockController {
@@ -22,5 +23,12 @@ export class StockController {
   @Patch('complete-transfer/:id')
   complete(@Param('id', ParseIntPipe) id: number) {
     return this.stockService.completeTransfer(id);
+  }
+
+  @Post('withdraw')
+  async withdraw(
+    @Body() stockDto: WithdrawStockDto,
+  ) {
+    return this.stockService.withdrawStock(stockDto, 2121071);
   }
 }

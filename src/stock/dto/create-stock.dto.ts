@@ -24,8 +24,8 @@ export class CreateStockDto {
 
 
 export class CreateTransferDetailDto {
-    @IsInt({ message: 'productId debe ser un entero' })
-    productId: number;
+    @IsInt({ message: 'stockId debe ser un entero' })
+    stockId: number; 
 
     @IsNumber({}, { message: 'quantity debe ser numérico' })
     @Min(0.000001, { message: 'quantity debe ser mayor que cero' })
